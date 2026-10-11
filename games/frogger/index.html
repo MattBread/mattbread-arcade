@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frogger | MattBread Arcade</title>
+<style>
+:root {
+  --bg: #07111d;
+  --panel: #101f30;
+  --cyan: #35f5ff;
+  --green: #55ff80;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #16364b, var(--bg) 65%);
+  color: #f2fbff;
+  font-family: system-ui, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px 28px;
+}
+header { text-align: center; margin-bottom: 14px; }
+h1 {
+  margin: 0;
+  font-size: clamp(32px, 7vw, 54px);
+  font-weight: 1000;
+  font-style: italic;
+  letter-spacing: 3px;
+  color: var(--green);
+  text-shadow: 0 0 12px #30ff8070, 0 4px #174c35;
+}
+.subtitle { color: #a9c5d9; font-size: 13px; letter-spacing: 2px; }
+.panel {
+  width: min(100%, 600px);
+  background: #0b1927eF;
+  border: 1px solid #2b5368;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 0 30px #00e5ff14;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.stat {
+  text-align: center;
+  background: #14283a;
+  border: 1px solid #29475b;
+  border-radius: 10px;
+  padding: 8px 3px;
+}
+.stat small {
+  display: block;
+  color: #9cb8cc;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.stat strong { font-size: 21px; color: var(--cyan); }
+.canvas-wrap {
+  width: 100%;
+  overflow: hidden;
+  border: 2px solid #2d5668;
+  border-radius: 10px;
+  background: #102b35;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+.message {
+  text-align: center;
+  color: #b9d4e5;
+  min-height: 24px;
+  padding: 9px 0 3px;
+  font-size: 13px;
+}
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+button, .back {
+  color: white;
+  background: linear-gradient(135deg, #183b52, #172742);
+  border: 1px solid #3d6a83;
+  border-radius: 10px;
+  padding: 11px 15px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: .15s;
+}
+button:hover, .back:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px #35f5ff35;
+  transform: translateY(-1px);
+}
+button:active { transform: scale(.96); }
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, 58px);
+  grid-template-rows: repeat(2, 48px);
+  gap: 6px;
+  justify-content: center;
+  margin: 14px auto 2px;
+  touch-action: none;
+}
+.controls button {
+  padding: 0;
+  font-size: 22px;
+  background: #17384b;
+  border-color: #39748a;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.up { grid-column: 2; grid-row: 1; }
+.left { grid-column: 1; grid-row: 2; }
+.down { grid-column: 2; grid-row: 2; }
+.right { grid-column: 3; grid-row: 2; }
+.tip { text-align: center; color: #8baabd; font-size: 11px; margin: 12px 0 3px; }
+footer { margin-top: 15px; }
+@media (min-width: 760px) {
+  .controls { grid-template-columns: repeat(3, 52px); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>FROGGER</h1>
+  <div class="subtitle">HOP FAST. DODGE TRAFFIC. GET HOME.</div>
+</header>
+
+<main class="panel">
+  <div class="stats">
+    <div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+    <div class="stat"><small>BEST</small><strong id="best">0</strong></div>
+    <div class="stat"><small>LIVES</small><strong id="lives">3</strong></div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="game" width="480" height="600" aria-label="Frogger game"></canvas>
+  </div>
+
+  <div class="message" id="message">Reach the five glowing home pads!</div>
+
+  <div class="buttons">
+    <button id="startBtn">▶ START GAME</button>
+    <button id="pauseBtn">Ⅱ PAUSE</button>
+    <button id="restartBtn">↻ RESTART</button>
+  </div>
+
+  <div class="controls" aria-label="Touch controls">
+    <button class="up" data-dir="up" aria-label="Up">▲</button>
+    <button class="left" data-dir="left" aria-label="Left">◀</button>
+    <button class="down" data-dir="down" aria-label="Down">▼</button>
+    <button class="right" data-dir="right" aria-label="Right">▶</button>
+  </div>
+  <div class="tip">KEYBOARD: ARROW KEYS / WASD · MOBILE: USE THE BUTTONS</div>
+</main>
+
+<footer><a class="back" href="../../">← BACK TO MATTBREAD ARCADE</a></footer>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const bestEl = document.getElementById("best");
+  const livesEl = document.getElementById("lives");
+  const messageEl = document.getElementById("message");
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+
+  const W = canvas.width, H = canvas.height;
+  const CELL = 40;
+  const COLS = 12;
+  const ROWS = 15;
+  const HOME_ROW = 0;
+  const START_ROW = 14;
+
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let homes = [false, false, false, false, false];
+  let best = 0;
+  try { best = Number(localStorage.getItem("mattbreadFroggerBest")) || 0; }
+  catch (_) {}
+  bestEl.textContent = best;
+
+  let running = false;
+  let paused = false;
+  let gameOver = false;
+  let lastTime = 0;
+  let elapsed = 0;
+  let hopTimer = 0;
+  let invulnerable = 0;
+  let flash = 0;
+  let frog = { x: 5, y: START_ROW };
+  let objects = [];
+  let particles = [];
+
+  const lanes = [
+    { row: 1, type: "water", speed: 37, size: 2, color: "#b7793d" },
+    { row: 2, type: "water", speed: -48, size: 3, color: "#c48b4b" },
+    { row: 3, type: "water", speed: 30, size: 2, color: "#9d6338" },
+    { row: 4, type: "water", speed: -42, size: 2, color: "#c28a48" },
+    { row: 6, type: "road", speed: 95, size: 1.3, color: "#ff535d" },
+    { row: 7, type: "road", speed: -125, size: 1.7, color: "#54cfff" },
+    { row: 8, type: "road", speed: 78, size: 1.1, color: "#ffd45a" },
+    { row: 9, type: "road", speed: -105, size: 1.5, color: "#e9efff" },
+    { row: 10, type: "road", speed: 88, size: 1.2, color: "#ff8a50" }
+  ];
+
+  function makeObjects() {
+    objects = [];
+    for (const lane of lanes) {
+      const count = lane.type === "water" ? 3 : 4;
+      const width = lane.size * CELL;
+      const spacing = W / count;
+      for (let i = 0; i < count; i++) {
+        objects.push({
+          row: lane.row,
+          type: lane.type,
+          x: i * spacing + (lane.type === "water" ? 0 : 10),
+          w: width,
+          h: lane.type === "water" ? 23 : 25,
+          speed: lane.speed,
+          color: lane.color,
+          phase: Math.random() * 6
+        });
+      }
+    }
+  }
+
+  function resetFrog() {
+    frog = { x: 5, y: START_ROW };
+    invulnerable = 1.1;
+  }
+
+  function updateUI() {
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    bestEl.textContent = best;
+  }
+
+  function saveBest() {
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem("mattbreadFroggerBest", String(best)); }
+      catch (_) {}
+    }
+    updateUI();
+  }
+
+  function say(text) { messageEl.textContent = text; }
+
+  function newGame() {
+    score = 0;
+    lives = 3;
+    level = 1;
+    homes = [false, false, false, false, false];
+    gameOver = false;
+    paused = false;
+    running = true;
+    elapsed = 0;
+    particles = [];
+    resetFrog();
+    makeObjects();
+    updateUI();
+    say("Go! Reach a glowing home pad at the top.");
+    startBtn.textContent = "▶ RUNNING";
+    pauseBtn.textContent = "Ⅱ PAUSE";
+  }
+
+  function loseLife(reason) {
+    if (invulnerable > 0 || !running || paused || gameOver) return;
+    lives--;
+    flash = 0.35;
+    updateUI();
+    if (lives <= 0) {
+      running = false;
+      gameOver = true;
+      saveBest();
+      say("GAME OVER — press RESTART to try again!");
+      startBtn.textContent = "▶ PLAY AGAIN";
+    } else {
+      say(reason || "Ouch! Watch your step!");
+      resetFrog();
+    }
+  }
+
+  function move(dx, dy) {
+    if (gameOver) return;
+    if (!running) {
+      running = true;
+      paused = false;
+      startBtn.textContent = "▶ RUNNING";
+    }
+    if (paused) return;
+    const nx = frog.x + dx, ny = frog.y + dy;
+    if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
+
+    frog.x = nx;
+    frog.y = ny;
+    hopTimer = 0.12;
+
+    if (dy < 0) {
+      score += 10;
+      saveBest();
+    }
+
+    if (frog.y === HOME_ROW) {
+      const pad = Math.round((frog.x + 0.5) / COLS * 5);
+      const idx = Math.max(0, Math.min(4, pad));
+      if (homes[idx]) {
+        say("That home is already filled! Try another.");
+        resetFrog();
+      } else if (frog.x >= idx * 2 && frog.x < idx * 2 + 2) {
+        homes[idx] = true;
+        score += 100;
+        particles.push({ x: (idx * 2 + 1) * CELL, y: 20, life: 1 });
+        if (homes.every(Boolean)) {
+          score += 250;
+          level++;
+          homes = [false, false, false, false, false];
+          makeObjects();
+          say("LEVEL " + level + "! Traffic and river are faster!");
+        } else {
+          say("Home secured! Find another glowing pad.");
+        }
+        saveBest();
+        resetFrog();
+      } else {
+        resetFrog();
+      }
+    }
+  }
+
+  function update(dt) {
+    if (!running || paused || gameOver) return;
+    elapsed += dt;
+    if (invulnerable > 0) invulnerable -= dt;
+    if (hopTimer > 0) hopTimer -= dt;
+    if (flash > 0) flash -= dt;
+
+    const speedFactor = 1 + (level - 1) * 0.12;
+    for (const o of objects) {
+      o.x += o.speed * speedFactor * dt;
+      if (o.speed > 0 && o.x > W + o.w) o.x = -o.w;
+      if (o.speed < 0 && o.x < -o.w) o.x = W + o.w;
+    }
+
+    const row = frog.y;
+    if (row >= 1 && row <= 4) {
+      const platform = objects.find(o =>
+        o.type === "water" && o.row === row &&
+        frog.x * CELL + 5 < o.x + o.w &&
+        frog.x * CELL + CELL - 5 > o.x
+      );
+      if (!platform) {
+        loseLife("Splash! You fell into the river!");
+      } else {
+        frog.x += platform.speed * dt / CELL;
+        if (frog.x < 0 || frog.x >= COLS) {
+          loseLife("The current swept you away!");
+        }
+      }
+    } else if (row >= 6 && row <= 10 && invulnerable <= 0) {
+      const fx = frog.x * CELL + 7, fw = CELL - 14;
+      const hit = objects.some(o =>
+        o.type === "road" && o.row === row &&
+        fx < o.x + o.w - 3 && fx + fw > o.x + 3
+      );
+      if (hit) loseLife("Traffic got you! Watch the road!");
+    }
+
+    for (const p of particles) p.life -= dt;
+    particles = particles.filter(p => p.life > 0);
+  }
+
+  function roundedRect(x, y, w, h, r, fill) {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    ctx.fill();
+  }
+
+  function drawBackground() {
+    ctx.fillStyle = "#122d38";
+    ctx.fillRect(0, 0, W, H);
+
+    // Safe start area
+    ctx.fillStyle = "#174b39";
+    ctx.fillRect(0, 11 * CELL, W, 4 * CELL);
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 71 + 13) % W, y = 445 + (i * 37) % 145;
+      ctx.fillStyle = i % 2 ? "#23724b" : "#205c42";
+      ctx.fillRect(x, y, 3, 3);
+    }
+
+    // Road lanes
+    for (let row = 6; row <= 10; row++) {
+      ctx.fillStyle = row % 2 ? "#29333e" : "#303b47";
+      ctx.fillRect(0, row * CELL, W, CELL);
+      ctx.fillStyle = "#677580";
+      ctx.globalAlpha = 0.45;
+      for (let x = 0; x < W; x += 48) {
+        ctx.fillRect(x, row * CELL + 19, 25, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Water
+    ctx.fillStyle = "#125b85";
+    ctx.fillRect(0, CELL, W, 4 * CELL);
+    for (let i = 0; i < 40; i++) {
+      ctx.fillStyle = "#1977a1";
+      ctx.globalAlpha = 0.45;
+      ctx.fillRect((i * 61 + elapsed * 18) % W, CELL + (i * 29) % (4 * CELL), 14, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    // Central median
+    ctx.fillStyle = "#1e6b43";
+    ctx.fillRect(0, 5 * CELL, W, CELL);
+    for (let i = 0; i < 24; i++) {
+      ctx.fillStyle = "#368c51";
+      ctx.beginPath();
+      ctx.arc(i * 21 + 6, 5 * CELL + 20 + Math.sin(i) * 8, 3,
