@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maze Chaser: Neon Run | MattBread Arcade</title>
+<style>
+*{box-sizing:border-box}
+:root{--cyan:#39f5ff;--purple:#a66cff;--pink:#ff58c8;--bg:#070b19}
+body{margin:0;padding:18px 12px 30px;background:radial-gradient(ellipse at top,#18234a,#070b19 70%);color:#f5f7ff;font-family:Arial,sans-serif;text-align:center}
+h1{margin:4px 0;color:var(--cyan);font-size:clamp(28px,6vw,46px);font-weight:1000;font-style:italic;letter-spacing:2px;text-shadow:0 0 18px #39f5ff66}
+.subtitle{font-size:11px;letter-spacing:3px;color:#b4a9e9;margin-bottom:16px}
+main{max-width:560px;margin:auto;background:#0d1428;border:1px solid #343d70;border-radius:18px;padding:12px;box-shadow:0 0 36px #4b36b222}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat{padding:8px 4px;border:1px solid #343d70;background:#131e37;border-radius:10px}
+.stat small{display:block;font-size:10px;letter-spacing:1px;color:#aab9db}
+.stat strong{display:block;font-size:22px;color:var(--cyan);margin-top:3px}
+canvas{display:block;width:100%;height:auto;border:2px solid #394a83;border-radius:9px;background:#050817;touch-action:none}
+#message{min-height:25px;padding:10px 2px 2px;color:#c5d2f5;font-size:13px}
+button,.back{border:1px solid #5365a5;background:linear-gradient(135deg,#233963,#30204e);color:#fff;border-radius:9px;padding:11px 14px;font-weight:bold;cursor:pointer;font-size:13px;margin:4px}
+button:hover,.back:hover{border-color:var(--cyan);box-shadow:0 0 14px #39f5ff33}
+.controls{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,46px);gap:5px;justify-content:center;margin:12px auto}
+.controls button{font-size:21px;padding:0;margin:0;touch-action:manipulation;user-select:none}
+.up{grid-column:2;grid-row:1}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
+.tip{color:#8497c5;font-size:11px;margin:8px}
+.back{display:inline-block;text-decoration:none;margin-top:14px}
+@media(min-width:600px){main{padding:16px}}
+</style>
+</head>
+<body>
+<h1>MAZE CHASER</h1>
+<div class="subtitle">NEON RUN · COLLECT · ESCAPE · SURVIVE</div>
+<main>
+ <div class="stats">
+  <div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+  <div class="stat"><small>BEST</small><strong id="best">0</strong></div>
+  <div class="stat"><small>SHIELDS / LIVES</small><strong id="lives">3</strong></div>
+ </div>
+ <canvas id="game" width="420" height="504" aria-label="Maze Chaser game"></canvas>
+ <div id="message">Collect every energy dot. Avoid the hunter bots!</div>
+ <div>
+  <button id="start">▶ START GAME</button>
+  <button id="pause">Ⅱ PAUSE</button>
+  <button id="restart">↻ RESTART</button>
+ </div>
+ <div class="controls">
+  <button class="up" data-dir="0,-1" aria-label="Up">▲</button>
+  <button class="left" data-dir="-1,0" aria-label="Left">◀</button>
+  <button class="down" data-dir="0,1" aria-label="Down">▼</button>
+  <button class="right" data-dir="1,0" aria-label="Right">▶</button>
+ </div>
+ <div class="tip">ARROW KEYS / WASD TO MOVE · SPACE OR P TO PAUSE</div>
+</main>
+<a class="back" href="../../">← BACK TO MATTBREAD ARCADE</a>
+
+<script>
+(function(){
+"use strict";
+var canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
+var scoreEl=document.getElementById("score"),bestEl=document.getElementById("best");
+var livesEl=document.getElementById("lives"),message=document.getElementById("message");
+var TILE=28,COLS=15,ROWS=18,W=420,H=504;
+var mapText=[
+"###############",
+"#....#...#....#",
+"#.##.#.#.#.##.#",
+"#o...#.#.#...o#",
+"###.##.#.##.###",
+"#...#.....#...#",
+"#.#.#.###.#.#.#",
+"#.#...#.#...#.#",
+"#.###.#.#.###.#",
+"#.....#.#.....#",
+"###.#.....#.###",
+"#...#.###.#...#",
+"#.#...#.#...#.#",
+"#.#.###.###.#.#",
+"#o#.........#o#",
+"#...#.....#...#",
+"#.............#",
+"###############"
+];
+var grid=[],dots=[],player,ghosts=[],score=0,best=0,lives=3,level=1;
+var running=false,paused=false,over=false,won=false,power=0,elapsed=0,last=0;
+var moveTimer=0,ghostTimer=0;
+try{best=Number(localStorage.getItem("mbMazeChaserBest"))||0}catch(e){}
+bestEl.textContent=best;
+
+function buildMap(){
+ grid=mapText.map(function(row){return row.split("")});
+ dots=[];
+ for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++)
+  if(grid[y][x]==="."||grid[y][x]==="o")
+   dots.push({x:x,y:y,power:grid[y][x]==="o",taken:false});
+}
+function resetActors(){
+ player={x:7,y:16,dir:{x:0,y:0},want:{x:0,y:0}};
+ ghosts=[
+  {x:7,y:8,color:"#ff5c83",name:"RUBY",wait:1.2,dir:{x:0,y:0}},
+  {x:6,y:9,color:"#52efff",name:"BYTE",wait:2.2,dir:{x:0,y:0}},
+  {x:8,y:9,color:"#bb80ff",name:"PIXEL",wait:3.2,dir:{x:0,y:0}},
+  {x:7,y:10,color:"#ffb74e",name:"SPARK",wait:4.2,dir:{x:0,y:0}}
+ ];
+ power=0;
+}
+function updateUI(){
+ scoreEl.textContent=score;livesEl.textContent=lives;bestEl.textContent=best;
+ if(score>best){best=score;bestEl.textContent=best;
+  try{localStorage.setItem("mbMazeChaserBest",String(best))}catch(e){}
+ }
+}
+function say(t){message.textContent=t}
+function startGame(){
+ score=0;lives=3;level=1;running=true;paused=false;over=false;won=false;
+ elapsed=0;moveTimer=0;ghostTimer=0;buildMap();resetActors();updateUI();
+ document.getElementById("start").textContent="▶ RUNNING";
+ document.getElementById("pause").textContent="Ⅱ PAUSE";
+ say("Go! Collect every energy dot!");
+}
+function walkable(x,y){
+ return y>=0&&y<ROWS&&x>=0&&x<COLS&&grid[y][x]!=="#";
+}
+function direction(dx,dy){
+ if(over||won)return;
+ if(!running)startGame();
+ if(paused)return;
+ player.want={x:dx,y:dy};
+ // Make the first input responsive.
+ if(player.dir.x===0&&player.dir.y===0)tryPlayerMove();
+}
+function tryPlayerMove(){
+ var nx=player.x+player.want.x,ny=player.y+player.want.y;
+ if((player.want.x||player.want.y)&&walkable(nx,ny)){
+  player.dir={x:player.want.x,y:player.want.y};
+ }
+ nx=player.x+player.dir.x;ny=player.y+player.dir.y;
+ if((player.dir.x||player.dir.y)&&walkable(nx,ny)){
+  player.x=nx;player.y=ny;
+  var dot=dots.find(function(d){return !d.taken&&d.x===nx&&d.y===ny});
+  if(dot){
+   dot.taken=true;
+   if(dot.power){power=7;score+=50;say("POWER SURGE! Hunters are vulnerable!")}
+   else score+=10;
+   updateUI();
+  }
+  checkGhostCollision();
+  if(dots.every(function(d){return d.taken})&&!over){
+   score+=250;level++;
+   if(level>5){won=true;running=false;say("YOU WIN! The whole maze is yours!")}
+   else{buildMap();resetActors();say("LEVEL "+level+"! The maze resets and hunters get quicker!")}
+   updateUI();
+  }
+ }
+}
+function chooseGhostMove(g){
+ var choices=[[1,0],[-1,0],[0,1],[0,-1]].filter(function(d){
+  return walkable(g.x+d[0],g.y+d[1])&&!(d[0]===-g.dir.x&&d[1]===-g.dir.y);
+ });
+ if(!choices.length)choices=[[1,0],[-1,0],[0,1],[0,-1]].filter(function(d){return walkable(g.x+d[0],g.y+d[1])});
+ if(!choices.length)return;
+ // Usually pursue the player; while powered, flee.
+ choices.sort(function(a,b){
+  var da=Math.abs(g.x+a[0]-player.x)+Math.abs(g.y+a[1]-player.y);
+  var db=Math.abs(g.x+b[0]-player.x)+Math.abs(g.y+b[1]-player.y);
+  return power>0?db-da:da-db;
+ });
+ var chosen=Math.random()<.23?choices[Math.floor(Math.random()*choices.length)]:choices[0];
+ g.dir={x:chosen[0],y:chosen[1]};
+ g.x+=chosen[0];g.y+=chosen[1];
+}
+function checkGhostCollision(){
+ ghosts.forEach(function(g){
+  if(g.x===player.x&&g.y===player.y){
+   if(power>0){
+    score+=100;updateUI();g.x=7;g.y=9;g.wait=1;
+    say("Hunter disabled! +100 points!");
+   }else{
+    lives--;updateUI();
+    if(lives<=0){
+     running=false;over=true;say("GAME OVER! Press RESTART to try again.");
+    }else{
+     resetActors();say("Caught! You lost a life — keep going!");
+    }
+   }
+  }
+ });
+}
+function update(dt){
+ if(!running||paused||over||won)return;
+ elapsed+=dt;if(power>0)power=Math.max(0,power-dt);
+ moveTimer+=dt;ghostTimer+=dt;
+ var playerDelay=.115;
+ if(moveTimer>=playerDelay){
+  moveTimer=0;tryPlayerMove();
+ }
+ var ghostDelay=Math.max(.23,.52-(level-1)*.035);
+ if(ghostTimer>=ghostDelay){
+  ghostTimer=0;
+  ghosts.forEach(function(g){
+   if(g.wait>0){g.wait-=ghostDelay;return}
+   chooseGhostMove(g);
+  });
+  checkGhostCollision();
+ }
+}
+function roundRect(x,y,w,h,r,color){
+ ctx.fillStyle=color;ctx.beginPath();
+ ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+ ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+ ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.fill();
+}
+function drawOrb(x,y,r,color){
+ ctx.save();ctx.shadowColor=color;ctx.shadowBlur=12;
+ ctx.fillStyle=color;ctx.beginPath();ctx.arc((x+.5)*TILE,(y+.5)*TILE,r,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function draw(){
+ ctx.fillStyle="#050817";ctx.fillRect(0,0,W,H);
+ // Maze walls
+ for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
+  if(grid[y]&&grid[y][x]==="#"){
+   roundRect(x*TILE+1,y*TILE+1,TILE-2,TILE-2,5,"#101e49");
+   ctx.strokeStyle="#367cff";ctx.lineWidth=1;
+   ctx.strokeRect(x*TILE+3,y*TILE+3,TILE-6,TILE-6);
+   ctx.fillStyle="#172d5e";ctx.fillRect(x*TILE+6,y*TILE+6,TILE-12,2);
+  }
+ }
+ // Energy dots
+ dots.forEach(function(d){
+  if(d.taken)return;
+  var cx=(d.x+.5)*TILE,cy=(d.y+.5)*TILE;
+  if(d.power){
+   ctx.save();ctx.shadowColor="#ff58c8";ctx.shadowBlur=15;
+   ctx.fillStyle="#ff80dc";ctx.beginPath();ctx.arc(cx,cy,6+Math.sin(elapsed*6)*1.2,0,Math.PI*2);ctx.fill();ctx.restore();
+  }else{
+   ctx.fillStyle="#b7faff";ctx.beginPath();ctx.arc(cx,cy,2.3,0,Math.PI*2);ctx.fill();
+  }
+ });
+ // Player orb with animated mouth
+ if(player){
+  var px=(player.x+.5)*TILE,py=(player.y+.5)*TILE;
+  ctx.save();ctx.shadowColor="#ffe45b";ctx.shadowBlur=16;
+  ctx.fillStyle="#ffe45b";ctx.beginPath();ctx.arc(px,py,10,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle="#111329";
+  var angle=Math.atan2(player.dir.y,player.dir.x);
+  var mouth=.18+.15*Math.abs(Math.sin(elapsed*12));
+  ctx.beginPath();ctx.moveTo(px,py);
+  ctx.arc(px,py,10,angle-mouth,angle+mouth);ctx.closePath();ctx.fill();
+  ctx.restore();
+ }
+ // Hunter bots
+ ghosts.forEach(function(g){
+  var x=(g.x+.5)*TILE,y=(g.y+.5)*TILE;
+  var c=power>0?"#6c9bff":g.color;
+  ctx.save();ctx.shadowColor=c;ctx.shadowBlur=power>0?18:10;
+  ctx.fillStyle=c;
+  ctx.beginPath();ctx.arc(x,y-1,10,Math.PI,0);ctx.lineTo(x+10,y+9);
+  ctx.lineTo(x+4,y+6);ctx.lineTo(x,y+10);ctx.lineTo(x-5,y+6);ctx.lineTo(x-10,y+9);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x-4,y-2,3.5,0,Math.PI*2);ctx.arc(x+4,y-2,3.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#12152a";ctx.beginPath();ctx.arc(x-3,y-1,1.7,0,Math.PI*2);ctx.arc(x+5,y-1,1.7,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ });
+ if(power>0&&running&&!paused){
+  ctx.fillStyle="#ff9deb";ctx.font="bold 11px Arial";ctx.textAlign="center";
+  ctx.fillText("POWER "+Math.ceil(power),W/2,12);
+ }
+ if(!running&&!over&&!won){
+  ctx.fillStyle="#030613d9";ctx.fillRect(0,0,W,H);
+  ctx.textAlign="center";ctx.fillStyle="#39f5ff";ctx.font="bold 26px Arial";
+  ctx.fillText("NEON RUN",W/2,H/2-22);
+  ctx.fillStyle="#fff";ctx.font="13px Arial";ctx.fillText("Collect the energy dots",W/2,H/2+8);
+  ctx.fillText("Press START to begin",W/2,H/2+29);
+ }
+ if(paused){
+  ctx.fillStyle="#030613dd";ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#39f5ff";ctx.font="bold 30px Arial";ctx.textAlign="center";
+  ctx.fillText("PAUSED",W/2,H/2);
+ }
+ if(over||won){
+  ctx.fillStyle="#030613dd";ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=won?"#66ffb4":"#ff7299";ctx.font="bold 29px Arial";ctx.textAlign="center";
+  ctx.fillText(won?"MAZE CLEARED!":"GAME OVER",W/2,H/2-15);
+  ctx.fillStyle="#fff";ctx.font="15px Arial";ctx.fillText("Score: "+score,W/2,H/2+18);
+ }
+}
+function frame(t){
+ var dt=Math.min((t-last)/1000||0,.04);last=t;
+ try{update(dt);draw()}catch(e){say("Game error: "+e.message);console.error(e)}
+ requestAnimationFrame(frame);
+}
+function togglePause(){
+ if(!running||over||won)return;
+ paused=!paused;
+ document.getElementById("pause").textContent=paused?"▶ RESUME":"Ⅱ PAUSE";
+ say(paused?"Game paused.":"Back in the maze!");
+}
+document.addEventListener("keydown",function(e){
+ var k=e.key.toLowerCase(),d=null;
+ if(k==="arrowup"||k==="w")d=[0,-1];
+ if(k==="arrowdown"||k==="s")d=[0,1];
+ if(k==="arrowleft"||k==="a")d=[-1,0];
+ if(k==="arrowright"||k==="d")d=[1,0];
+ if(d){e.preventDefault();if(!e.repeat)direction(d[0],d[1])}
+ if(k===" "||k==="p"){e.preventDefault();togglePause()}
+ if(k==="enter"&&(!running||over||won))startGame();
+});
+document.querySelectorAll("[data-dir]").forEach(function(b){
+ b.addEventListener("pointerdown",function(e){
+  e.preventDefault();var d=b.getAttribute("data-dir").split(",");
+  direction(Number(d[0]),Number(d[1]));
+ });
+});
+document.getElementById("start").addEventListener("click",function(){if(!running||over||won)startGame()});
+document.getElementById("restart").addEventListener("click",startGame);
+document.getElementById("pause").addEventListener("click",togglePause);
+buildMap();resetActors();draw();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
