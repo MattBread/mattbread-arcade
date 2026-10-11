@@ -1,1 +1,152 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pong | MattBread Arcade</title>
+<style>
+:root{color-scheme:dark;--cyan:#35e7ff;--purple:#a66bff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#202653,#080b16 70%);color:#f5f7ff;font-family:Arial,sans-serif;display:flex;justify-content:center;padding:20px}
+main{width:min(100%,900px)}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+a{color:var(--cyan);text-decoration:none}
+h1{margin:8px 0;color:var(--cyan);letter-spacing:3px}
+p{color:#b4bdd5}
+.panel{background:#11182b;border:1px solid #ffffff20;border-radius:14px;padding:14px;margin:14px 0}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select{background:#202b47;color:white;border:1px solid #526185;border-radius:8px;padding:10px 13px;cursor:pointer;font-weight:bold}
+button:hover{border-color:var(--cyan)}
+button.active{background:var(--cyan);color:#07101b}
+#board{width:100%;display:block;aspect-ratio:16/10;background:#080d19;border:2px solid #35466c;border-radius:10px;touch-action:none}
+.scoreboard{display:flex;justify-content:center;align-items:center;gap:30px;text-align:center;margin:12px 0}
+.score{font-size:clamp(30px,6vw,48px);font-weight:900;color:var(--cyan)}
+.player{font-size:12px;letter-spacing:2px;color:#aab6d1}
+#message{text-align:center;min-height:24px;color:#fff;font-weight:bold}
+.touch{display:flex;justify-content:space-between;gap:18px}
+.touch button{width:48%;padding:16px;font-size:20px;touch-action:manipulation}
+small{color:#8793b2;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><a href="../../">← BACK TO ARCADE</a><h1>PONG</h1></div>
+  <button id="pauseBtn">Ⅱ PAUSE</button>
+</header>
+<p>Classic arcade action. First to 7 wins!</p>
+<div class="panel">
+  <div class="controls">
+    <button class="mode active" data-mode="cpu">VS COMPUTER</button>
+    <button class="mode" data-mode="two">2 PLAYERS</button>
+    <label>Difficulty
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Hard</option>
+      </select>
+    </label>
+    <button id="restart">↻ NEW MATCH</button>
+  </div>
+</div>
+<div class="scoreboard">
+  <div><div class="player">PLAYER 1</div><div class="score" id="leftScore">0</div></div>
+  <div style="color:#68779d;font-size:24px">:</div>
+  <div><div class="player" id="rightLabel">COMPUTER</div><div class="score" id="rightScore">0</div></div>
+</div>
+<canvas id="board" width="800" height="500" aria-label="Pong game board"></canvas>
+<div class="panel">
+  <div id="message">Press START MATCH to play!</div>
+  <div class="controls" style="justify-content:center">
+    <button id="startBtn" class="active">▶ START MATCH</button>
+  </div>
+</div>
+<div class="panel">
+  <strong>Controls</strong>
+  <p><b>Player 1:</b> W / S or touch buttons below.</p>
+  <p><b>Player 2:</b> ↑ / ↓ in two-player mode.</p>
+  <p><b>Mobile:</b> Use the touch buttons or drag your finger vertically on your side of the game board.</p>
+  <div class="touch">
+    <button id="upBtn">▲</button>
+    <button id="downBtn">▼</button>
+  </div>
+  <p><small>First to 7 points wins. Match wins and losses are saved in this browser.</small></p>
+  <div class="controls">
+    <span>Wins: <b id="wins">0</b></span>
+    <span>Losses: <b id="losses">0</b></span>
+    <span>Best rally: <b id="bestRally">0</b></span>
+  </div>
+</div>
+<footer><small>MATTBREAD ARCADE · PONG</small></footer>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const W=800,H=500,PW=13,PH=94,R=9,TARGET=7;
+let mode='cpu',running=false,paused=false,ended=false,raf=0,last=0;
+let leftY=H/2-PH/2,rightY=H/2-PH/2;
+let ball={x:W/2,y:H/2,vx:5,vy:2.2};
+let scoreL=0,scoreR=0,rally=0;
+let up=false,down=false,p2up=false,p2down=false;
+let wins=Number(localStorage.getItem('pongWins')||0);
+let losses=Number(localStorage.getItem('pongLosses')||0);
+let bestRally=Number(localStorage.getItem('pongBestRally')||0);
+const diff={easy:{speed:3.8,step:3.0},normal:{speed:5,step:4.1},hard:{speed:6.3,step:5.5}};
+function syncStats(){$('wins').textContent=wins;$('losses').textContent=losses;$('bestRally').textContent=bestRally;}
+function centerBall(dir=1){ball={x:W/2,y:H/2,vx:diff[$('difficulty').value].speed*dir,vy:(Math.random()*3-1.5)};rally=0;}
+function fresh(){scoreL=scoreR=0;leftY=rightY=H/2-PH/2;running=false;paused=false;ended=false;centerBall(Math.random()<.5?-1:1);$('leftScore').textContent=0;$('rightScore').textContent=0;$('message').textContent='Press START MATCH to play!';$('startBtn').textContent='▶ START MATCH';$('pauseBtn').textContent='Ⅱ PAUSE';draw();}
+function setMode(m){mode=m;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));$('rightLabel').textContent=m==='cpu'?'COMPUTER':'PLAYER 2';fresh();}
+function draw(){
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle='#080d19';ctx.fillRect(0,0,W,H);
+ctx.strokeStyle='#283655';ctx.setLineDash([12,13]);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
+ctx.fillStyle='#35e7ff';ctx.shadowColor='#35e7ff';ctx.shadowBlur=18;ctx.fillRect(25,leftY,PW,PH);
+ctx.fillStyle='#a66bff';ctx.shadowColor='#a66bff';ctx.fillRect(W-25-PW,rightY,PW,PH);
+ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(ball.x,ball.y,R,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+ctx.fillStyle='#1d2b49';ctx.fillRect(0,0,W,5);ctx.fillRect(0,H-5,W,5);
+ctx.shadowBlur=0;
+}
+function finish(won){running=false;ended=true;if(won){wins++;localStorage.setItem('pongWins',wins);$('message').textContent='🏆 YOU WIN THE MATCH!';}else{losses++;localStorage.setItem('pongLosses',losses);$('message').textContent='MATCH OVER — TRY AGAIN!';}syncStats();$('startBtn').textContent='▶ PLAY AGAIN';}
+function point(leftWon){
+if(leftWon)scoreL++;else scoreR++;
+$('leftScore').textContent=scoreL;$('rightScore').textContent=scoreR;
+if(scoreL>=TARGET){finish(true);return;}
+if(scoreR>=TARGET){finish(false);return;}
+centerBall(leftWon?1:-1);
+ball.y=H/2;
+}
+function update(dt){
+const d=diff[$('difficulty').value],step=d.step*dt;
+if(up)leftY-=step*1.5;if(down)leftY+=step*1.5;
+if(mode==='two'){if(p2up)rightY-=step*1.5;if(p2down)rightY+=step*1.5;}
+else{let target=ball.y-PH/2;let error=target-rightY;let cpu=d.step*(d.step===5.5?1.05:d.step===4.1?.88:.7)*dt;if(Math.abs(error)>9)rightY+=Math.sign(error)*Math.min(Math.abs(error),cpu);}
+leftY=Math.max(5,Math.min(H-PH-5,leftY));rightY=Math.max(5,Math.min(H-PH-5,rightY));
+ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+if(ball.y-R<5||ball.y+R>H-5)ball.vy*=-1;
+if(ball.vx<0&&ball.x-R<25+PW&&ball.x>25&&ball.y+R>leftY&&ball.y-R<leftY+PH){ball.x=25+PW+R;ball.vx=Math.abs(ball.vx)*1.04;ball.vy+=((ball.y-(leftY+PH/2))/(PH/2))*1.8;rally++;if(rally>bestRally){bestRally=rally;localStorage.setItem('pongBestRally',bestRally);syncStats();}}
+if(ball.vx>0&&ball.x+R>W-25-PW&&ball.x<W-25&&ball.y+R>rightY&&ball.y-R<rightY+PH){ball.x=W-25-PW-R;ball.vx=-Math.abs(ball.vx)*1.04;ball.vy+=((ball.y-(rightY+PH/2))/(PH/2))*1.8;rally++;}
+ball.vy=Math.max(-8,Math.min(8,ball.vy));
+if(ball.x<-20)point(false);if(ball.x>W+20)point(true);
+}
+function loop(t){if(!running)return;let dt=Math.min((t-last)/16.667||1,2);last=t;if(!paused)update(dt);draw();raf=requestAnimationFrame(loop);}
+function start(){if(ended)fresh();if(!running){running=true;paused=false;last=performance.now();$('message').textContent=mode==='cpu'?'Beat the computer!':'Player 1 vs Player 2!';$('startBtn').textContent='▶ MATCH RUNNING';$('pauseBtn').textContent='Ⅱ PAUSE';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}}
+function togglePause(){if(!running)return;paused=!paused;$('pauseBtn').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';$('message').textContent=paused?'PAUSED':'Match in progress';}
+document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+$('restart').addEventListener('click',fresh);$('startBtn').addEventListener('click',start);$('pauseBtn').addEventListener('click',togglePause);
+document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['w','s','arrowup','arrowdown',' '].includes(k))e.preventDefault();if(k==='w')up=true;if(k==='s')down=true;if(k==='arrowup')p2up=true;if(k==='arrowdown')p2down=true;if(k===' '&&e.repeat===false){if(running)togglePause();else start();}});
+document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k==='w')up=false;if(k==='s')down=false;if(k==='arrowup')p2up=false;if(k==='arrowdown')p2down=false;});
+function hold(id,set){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();set(true);b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>set(false)));}
+hold('upBtn',v=>up=v);hold('downBtn',v=>down=v);
+let dragging=false,dragSide='left';
+canvas.addEventListener('pointerdown',e=>{dragging=true;dragSide=(e.offsetX<canvas.clientWidth/2||mode==='cpu')?'left':'right';moveDrag(e);canvas.setPointerCapture(e.pointerId);if(!running&&!ended)start();});
+canvas.addEventListener('pointermove',e=>{if(dragging)moveDrag(e)});
+function moveDrag(e){const rect=canvas.getBoundingClientRect(),y=(e.clientY-rect.top)/rect.height*H;if(dragSide==='left')leftY=y-PH/2;else if(mode==='two')rightY=y-PH/2;}
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>canvas.addEventListener(ev,()=>dragging=false));
+syncStats();fresh();
+})();
+</script>
+</body>
+</html>
+
