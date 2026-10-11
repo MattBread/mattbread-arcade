@@ -1,443 +1,278 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frogger | MattBread Arcade</title>
 <style>
-:root {
-  --bg: #07111d;
-  --panel: #101f30;
-  --cyan: #35f5ff;
-  --green: #55ff80;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(ellipse at top, #16364b, var(--bg) 65%);
-  color: #f2fbff;
-  font-family: system-ui, Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 18px 12px 28px;
-}
-header { text-align: center; margin-bottom: 14px; }
-h1 {
-  margin: 0;
-  font-size: clamp(32px, 7vw, 54px);
-  font-weight: 1000;
-  font-style: italic;
-  letter-spacing: 3px;
-  color: var(--green);
-  text-shadow: 0 0 12px #30ff8070, 0 4px #174c35;
-}
-.subtitle { color: #a9c5d9; font-size: 13px; letter-spacing: 2px; }
-.panel {
-  width: min(100%, 600px);
-  background: #0b1927eF;
-  border: 1px solid #2b5368;
-  border-radius: 18px;
-  padding: 12px;
-  box-shadow: 0 0 30px #00e5ff14;
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.stat {
-  text-align: center;
-  background: #14283a;
-  border: 1px solid #29475b;
-  border-radius: 10px;
-  padding: 8px 3px;
-}
-.stat small {
-  display: block;
-  color: #9cb8cc;
-  font-size: 10px;
-  letter-spacing: 1px;
-}
-.stat strong { font-size: 21px; color: var(--cyan); }
-.canvas-wrap {
-  width: 100%;
-  overflow: hidden;
-  border: 2px solid #2d5668;
-  border-radius: 10px;
-  background: #102b35;
-}
-canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  image-rendering: pixelated;
-  touch-action: none;
-}
-.message {
-  text-align: center;
-  color: #b9d4e5;
-  min-height: 24px;
-  padding: 9px 0 3px;
-  font-size: 13px;
-}
-.buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 8px;
-}
-button, .back {
-  color: white;
-  background: linear-gradient(135deg, #183b52, #172742);
-  border: 1px solid #3d6a83;
-  border-radius: 10px;
-  padding: 11px 15px;
-  font-weight: 800;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: .15s;
-}
-button:hover, .back:hover {
-  border-color: var(--cyan);
-  box-shadow: 0 0 14px #35f5ff35;
-  transform: translateY(-1px);
-}
-button:active { transform: scale(.96); }
-.controls {
-  display: grid;
-  grid-template-columns: repeat(3, 58px);
-  grid-template-rows: repeat(2, 48px);
-  gap: 6px;
-  justify-content: center;
-  margin: 14px auto 2px;
-  touch-action: none;
-}
-.controls button {
-  padding: 0;
-  font-size: 22px;
-  background: #17384b;
-  border-color: #39748a;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.up { grid-column: 2; grid-row: 1; }
-.left { grid-column: 1; grid-row: 2; }
-.down { grid-column: 2; grid-row: 2; }
-.right { grid-column: 3; grid-row: 2; }
-.tip { text-align: center; color: #8baabd; font-size: 11px; margin: 12px 0 3px; }
-footer { margin-top: 15px; }
-@media (min-width: 760px) {
-  .controls { grid-template-columns: repeat(3, 52px); }
-}
+*{box-sizing:border-box}
+body{margin:0;background:#071321;color:#efffff;font-family:Arial,sans-serif;text-align:center;padding:16px}
+h1{color:#55ff80;font-size:42px;margin:8px;text-shadow:0 0 15px #36ff8070}
+.stats{display:flex;justify-content:center;gap:10px;margin:15px auto}
+.stat{background:#142b40;border:1px solid #35f5ff;border-radius:10px;padding:10px 18px}
+.stat strong{display:block;color:#35f5ff;font-size:24px}
+.stat span{font-size:11px;color:#bdd3e5}
+main{max-width:500px;margin:auto}
+canvas{display:block;width:100%;height:auto;border:2px solid #35f5ff;border-radius:8px;background:#153b38;touch-action:manipulation}
+button,.back{background:#163c51;color:white;border:1px solid #35f5ff;border-radius:9px;padding:12px 16px;font-weight:bold;cursor:pointer;margin:5px}
+.controls{display:grid;grid-template-columns:repeat(3,58px);gap:5px;justify-content:center;margin:12px}
+.controls button{font-size:22px;margin:0;padding:8px}
+.up{grid-column:2}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
+#message{min-height:22px;color:#b9d7e9;margin:10px}
+a{display:inline-block;text-decoration:none;margin-top:12px}
 </style>
 </head>
 <body>
-<header>
-  <h1>FROGGER</h1>
-  <div class="subtitle">HOP FAST. DODGE TRAFFIC. GET HOME.</div>
-</header>
-
-<main class="panel">
-  <div class="stats">
-    <div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
-    <div class="stat"><small>BEST</small><strong id="best">0</strong></div>
-    <div class="stat"><small>LIVES</small><strong id="lives">3</strong></div>
-  </div>
-
-  <div class="canvas-wrap">
-    <canvas id="game" width="480" height="600" aria-label="Frogger game"></canvas>
-  </div>
-
-  <div class="message" id="message">Reach the five glowing home pads!</div>
-
-  <div class="buttons">
-    <button id="startBtn">▶ START GAME</button>
-    <button id="pauseBtn">Ⅱ PAUSE</button>
-    <button id="restartBtn">↻ RESTART</button>
-  </div>
-
-  <div class="controls" aria-label="Touch controls">
-    <button class="up" data-dir="up" aria-label="Up">▲</button>
-    <button class="left" data-dir="left" aria-label="Left">◀</button>
-    <button class="down" data-dir="down" aria-label="Down">▼</button>
-    <button class="right" data-dir="right" aria-label="Right">▶</button>
-  </div>
-  <div class="tip">KEYBOARD: ARROW KEYS / WASD · MOBILE: USE THE BUTTONS</div>
+<h1>FROGGER</h1>
+<main>
+<div class="stats">
+<div class="stat"><span>SCORE</span><strong id="score">0</strong></div>
+<div class="stat"><span>BEST</span><strong id="best">0</strong></div>
+<div class="stat"><span>LIVES</span><strong id="lives">3</strong></div>
+</div>
+<canvas id="game" width="480" height="600"></canvas>
+<div id="message">Hop across the roads and river to reach home!</div>
+<button id="start">▶ START GAME</button>
+<button id="pause">Ⅱ PAUSE</button>
+<button id="restart">↻ RESTART</button>
+<div class="controls">
+<button class="up" data-move="0,-1">▲</button>
+<button class="left" data-move="-1,0">◀</button>
+<button class="down" data-move="0,1">▼</button>
+<button class="right" data-move="1,0">▶</button>
+</div>
+<p>Arrow keys or WASD to move. Reach all five home pads!</p>
+<a class="back" href="../../">← BACK TO MATTBREAD ARCADE</a>
 </main>
-
-<footer><a class="back" href="../../">← BACK TO MATTBREAD ARCADE</a></footer>
-
 <script>
-(() => {
-  "use strict";
+(function(){
+"use strict";
+var canvas=document.getElementById("game");
+var ctx=canvas.getContext("2d");
+var scoreEl=document.getElementById("score");
+var bestEl=document.getElementById("best");
+var livesEl=document.getElementById("lives");
+var msg=document.getElementById("message");
+var CELL=40,W=480,H=600;
+var score=0,lives=3,level=1,best=0,running=false,paused=false,over=false;
+var frog={x:5,y:14},homes=[false,false,false,false,false];
+var objects=[],last=0,elapsed=0,invincible=0;
+try{best=Number(localStorage.getItem("mbFroggerBest"))||0}catch(e){}
+bestEl.textContent=best;
 
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
-  const scoreEl = document.getElementById("score");
-  const bestEl = document.getElementById("best");
-  const livesEl = document.getElementById("lives");
-  const messageEl = document.getElementById("message");
-  const startBtn = document.getElementById("startBtn");
-  const pauseBtn = document.getElementById("pauseBtn");
+var lanes=[
+{row:1,type:"log",speed:48,width:115,color:"#bd8446"},
+{row:2,type:"log",speed:-62,width:150,color:"#d29b55"},
+{row:3,type:"log",speed:40,width:100,color:"#a96d3b"},
+{row:4,type:"log",speed:-52,width:115,color:"#d39a50"},
+{row:6,type:"car",speed:105,width:54,color:"#ff515e"},
+{row:7,type:"car",speed:-135,width:68,color:"#48cfff"},
+{row:8,type:"car",speed:85,width:47,color:"#ffd34f"},
+{row:9,type:"car",speed:-110,width:60,color:"#c28aff"},
+{row:10,type:"car",speed:95,width:52,color:"#ff9254"}
+];
 
-  const W = canvas.width, H = canvas.height;
-  const CELL = 40;
-  const COLS = 12;
-  const ROWS = 15;
-  const HOME_ROW = 0;
-  const START_ROW = 14;
-
-  let score = 0;
-  let lives = 3;
-  let level = 1;
-  let homes = [false, false, false, false, false];
-  let best = 0;
-  try { best = Number(localStorage.getItem("mattbreadFroggerBest")) || 0; }
-  catch (_) {}
-  bestEl.textContent = best;
-
-  let running = false;
-  let paused = false;
-  let gameOver = false;
-  let lastTime = 0;
-  let elapsed = 0;
-  let hopTimer = 0;
-  let invulnerable = 0;
-  let flash = 0;
-  let frog = { x: 5, y: START_ROW };
-  let objects = [];
-  let particles = [];
-
-  const lanes = [
-    { row: 1, type: "water", speed: 37, size: 2, color: "#b7793d" },
-    { row: 2, type: "water", speed: -48, size: 3, color: "#c48b4b" },
-    { row: 3, type: "water", speed: 30, size: 2, color: "#9d6338" },
-    { row: 4, type: "water", speed: -42, size: 2, color: "#c28a48" },
-    { row: 6, type: "road", speed: 95, size: 1.3, color: "#ff535d" },
-    { row: 7, type: "road", speed: -125, size: 1.7, color: "#54cfff" },
-    { row: 8, type: "road", speed: 78, size: 1.1, color: "#ffd45a" },
-    { row: 9, type: "road", speed: -105, size: 1.5, color: "#e9efff" },
-    { row: 10, type: "road", speed: 88, size: 1.2, color: "#ff8a50" }
-  ];
-
-  function makeObjects() {
-    objects = [];
-    for (const lane of lanes) {
-      const count = lane.type === "water" ? 3 : 4;
-      const width = lane.size * CELL;
-      const spacing = W / count;
-      for (let i = 0; i < count; i++) {
-        objects.push({
-          row: lane.row,
-          type: lane.type,
-          x: i * spacing + (lane.type === "water" ? 0 : 10),
-          w: width,
-          h: lane.type === "water" ? 23 : 25,
-          speed: lane.speed,
-          color: lane.color,
-          phase: Math.random() * 6
-        });
-      }
-    }
+function createObjects(){
+ objects=[];
+ lanes.forEach(function(l){
+  var count=l.type==="log"?3:4;
+  for(var i=0;i<count;i++){
+   objects.push({row:l.row,type:l.type,x:i*(W/count),w:l.width,
+    speed:l.speed,color:l.color});
   }
-
-  function resetFrog() {
-    frog = { x: 5, y: START_ROW };
-    invulnerable = 1.1;
+ });
+}
+function updateStats(){
+ scoreEl.textContent=score;
+ livesEl.textContent=lives;
+ if(score>best){best=score;try{localStorage.setItem("mbFroggerBest",best)}catch(e){}}
+ bestEl.textContent=best;
+}
+function resetFrog(){frog={x:5,y:14};invincible=1.2}
+function startGame(){
+ score=0;lives=3;level=1;homes=[false,false,false,false,false];
+ over=false;paused=false;running=true;elapsed=0;
+ resetFrog();createObjects();updateStats();
+ msg.textContent="Go! Dodge traffic and ride the logs!";
+ document.getElementById("start").textContent="▶ RUNNING";
+}
+function loseLife(text){
+ if(invincible>0||!running||paused||over)return;
+ lives--;updateStats();msg.textContent=text;
+ if(lives<=0){running=false;over=true;msg.textContent="GAME OVER! Press RESTART to play again."}
+ else resetFrog();
+}
+function move(dx,dy){
+ if(over)return;
+ if(!running)startGame();
+ if(paused)return;
+ var nx=frog.x+dx,ny=frog.y+dy;
+ if(nx<0||nx>=12||ny<0||ny>=15)return;
+ frog.x=nx;frog.y=ny;
+ if(dy<0){score+=10;updateStats()}
+ if(frog.y===0){
+  var idx=Math.floor(frog.x/2);
+  if(idx<0||idx>4)return;
+  if(homes[idx]){msg.textContent="That home is already filled!";resetFrog();return}
+  homes[idx]=true;score+=100;updateStats();
+  if(homes.every(Boolean)){
+   score+=250;level++;homes=[false,false,false,false,false];createObjects();
+   msg.textContent="LEVEL "+level+"! Everything moves faster!";
+  }else msg.textContent="Home reached! Find another glowing pad!";
+  resetFrog();
+ }
+}
+function rect(x,y,w,h,color){
+ ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
+}
+function rounded(x,y,w,h,r,color){
+ ctx.fillStyle=color;ctx.beginPath();
+ ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.lineTo(x+w,y+r);
+ ctx.lineTo(x+w,y+h-r);ctx.lineTo(x+w-r,y+h);
+ ctx.lineTo(x+r,y+h);ctx.lineTo(x,y+h-r);ctx.lineTo(x,y+r);
+ ctx.closePath();ctx.fill();
+}
+function draw(){
+ // Grass and safe start area
+ rect(0,0,W,H,"#174936");
+ rect(0,440,W,160,"#174d36");
+ for(var i=0;i<75;i++){
+  rect((i*67)%W,445+(i*31)%150,3,3,i%2?"#27774a":"#205c3c");
+ }
+ // Road
+ for(var r=6;r<=10;r++){
+  rect(0,r*CELL,W,CELL,r%2?"#303944":"#27323d");
+  for(var d=0;d<6;d++)rect(d*88+10,r*CELL+19,38,2,"#75808b");
+ }
+ // River and ripples
+ rect(0,CELL,W,160,"#0875a5");
+ for(var q=0;q<30;q++){
+  rect((q*79+elapsed*24)%W,CELL+(q*43)%155,18,2,"#36a7c9");
+ }
+ // Green median
+ rect(0,200,W,40,"#267347");
+ for(var g=0;g<22;g++)rect(g*23+5,215+(g%3)*4,4,4,"#61b86b");
+ // Home row and pads
+ rect(0,0,W,40,"#155b3a");
+ for(var h=0;h<5;h++){
+  rounded(h*96+5,5,86,30,7,homes[h]?"#c3ff70":"#092b32");
+  ctx.fillStyle=homes[h]?"#164526":"#6dffc1";
+  ctx.font="bold 22px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(homes[h]?"✓":"✦",h*96+48,20);
+ }
+ // Objects: logs and vehicles
+ objects.forEach(function(o){
+  var y=o.row*CELL+7;
+  if(o.type==="log"){
+   rounded(o.x,y,o.w,25,6,o.color);
+   for(var a=o.x+10;a<o.x+o.w-5;a+=19)rect(a,y+5,3,15,"#80512f");
+   rect(o.x+5,y+3,o.w-10,2,"#e5bb79");
+  }else{
+   rounded(o.x,y,o.w,25,6,o.color);
+   rect(o.x+o.w*.2,y+3,o.w*.25,7,"#e6f8ff");
+   rect(o.x+o.w*.58,y+3,o.w*.25,7,"#e6f8ff");
+   rect(o.x+7,y+21,10,5,"#111923");
+   rect(o.x+o.w-17,y+21,10,5,"#111923");
   }
-
-  function updateUI() {
-    scoreEl.textContent = score;
-    livesEl.textContent = lives;
-    bestEl.textContent = best;
+ });
+ // Frog character
+ if(invincible<=0||Math.floor(elapsed*12)%2===0){
+  var fx=frog.x*CELL+20,fy=frog.y*CELL+21;
+  ctx.fillStyle="#43f56b";
+  ctx.beginPath();ctx.ellipse(fx,fy,14,13,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(fx-8,fy-9,7,0,Math.PI*2);
+  ctx.arc(fx+8,fy-9,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.beginPath();ctx.arc(fx-8,fy-10,4,0,Math.PI*2);
+  ctx.arc(fx+8,fy-10,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#10231c";
+  ctx.beginPath();ctx.arc(fx-7,fy-10,2,0,Math.PI*2);
+  ctx.arc(fx+9,fy-10,2,0,Math.PI*2);ctx.fill();
+  rect(fx-10,fy+8,7,5,"#43f56b");rect(fx+4,fy+8,7,5,"#43f56b");
+ }
+ if(!running&&!over){
+  rect(0,0,W,H,"#06111bc9");
+  ctx.fillStyle="#66ff91";ctx.font="bold 35px Arial";ctx.textAlign="center";
+  ctx.fillText("FROGGER",W/2,H/2-20);
+  ctx.fillStyle="white";ctx.font="16px Arial";
+  ctx.fillText("Press START to play",W/2,H/2+18);
+ }
+ if(paused){
+  rect(0,0,W,H,"#06111bd9");
+  ctx.fillStyle="white";ctx.textAlign="center";ctx.font="bold 34px Arial";
+  ctx.fillText("PAUSED",W/2,H/2);
+ }
+ if(over){
+  rect(0,0,W,H,"#06111bd9");
+  ctx.fillStyle="#ff7777";ctx.textAlign="center";ctx.font="bold 32px Arial";
+  ctx.fillText("GAME OVER",W/2,H/2-15);
+  ctx.fillStyle="white";ctx.font="16px Arial";
+  ctx.fillText("Score: "+score,W/2,H/2+20);
+ }
+}
+function update(dt){
+ if(!running||paused||over)return;
+ elapsed+=dt;if(invincible>0)invincible-=dt;
+ objects.forEach(function(o){
+  o.x+=o.speed*(1+(level-1)*.12)*dt;
+  if(o.speed>0&&o.x>W+o.w)o.x=-o.w;
+  if(o.speed<0&&o.x<-o.w)o.x=W+o.w;
+ });
+ if(frog.y>=1&&frog.y<=4){
+  var fx=frog.x*CELL+5;
+  var platform=objects.find(function(o){
+   return o.type==="log"&&o.row===frog.y&&fx<o.x+o.w&&fx+30>o.x;
+  });
+  if(!platform)loseLife("Splash! You fell into the river!");
+  else{
+   frog.x+=platform.speed*dt/CELL;
+   if(frog.x<0||frog.x>=12)loseLife("The current swept you away!");
   }
-
-  function saveBest() {
-    if (score > best) {
-      best = score;
-      try { localStorage.setItem("mattbreadFroggerBest", String(best)); }
-      catch (_) {}
-    }
-    updateUI();
-  }
-
-  function say(text) { messageEl.textContent = text; }
-
-  function newGame() {
-    score = 0;
-    lives = 3;
-    level = 1;
-    homes = [false, false, false, false, false];
-    gameOver = false;
-    paused = false;
-    running = true;
-    elapsed = 0;
-    particles = [];
-    resetFrog();
-    makeObjects();
-    updateUI();
-    say("Go! Reach a glowing home pad at the top.");
-    startBtn.textContent = "▶ RUNNING";
-    pauseBtn.textContent = "Ⅱ PAUSE";
-  }
-
-  function loseLife(reason) {
-    if (invulnerable > 0 || !running || paused || gameOver) return;
-    lives--;
-    flash = 0.35;
-    updateUI();
-    if (lives <= 0) {
-      running = false;
-      gameOver = true;
-      saveBest();
-      say("GAME OVER — press RESTART to try again!");
-      startBtn.textContent = "▶ PLAY AGAIN";
-    } else {
-      say(reason || "Ouch! Watch your step!");
-      resetFrog();
-    }
-  }
-
-  function move(dx, dy) {
-    if (gameOver) return;
-    if (!running) {
-      running = true;
-      paused = false;
-      startBtn.textContent = "▶ RUNNING";
-    }
-    if (paused) return;
-    const nx = frog.x + dx, ny = frog.y + dy;
-    if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
-
-    frog.x = nx;
-    frog.y = ny;
-    hopTimer = 0.12;
-
-    if (dy < 0) {
-      score += 10;
-      saveBest();
-    }
-
-    if (frog.y === HOME_ROW) {
-      const pad = Math.round((frog.x + 0.5) / COLS * 5);
-      const idx = Math.max(0, Math.min(4, pad));
-      if (homes[idx]) {
-        say("That home is already filled! Try another.");
-        resetFrog();
-      } else if (frog.x >= idx * 2 && frog.x < idx * 2 + 2) {
-        homes[idx] = true;
-        score += 100;
-        particles.push({ x: (idx * 2 + 1) * CELL, y: 20, life: 1 });
-        if (homes.every(Boolean)) {
-          score += 250;
-          level++;
-          homes = [false, false, false, false, false];
-          makeObjects();
-          say("LEVEL " + level + "! Traffic and river are faster!");
-        } else {
-          say("Home secured! Find another glowing pad.");
-        }
-        saveBest();
-        resetFrog();
-      } else {
-        resetFrog();
-      }
-    }
-  }
-
-  function update(dt) {
-    if (!running || paused || gameOver) return;
-    elapsed += dt;
-    if (invulnerable > 0) invulnerable -= dt;
-    if (hopTimer > 0) hopTimer -= dt;
-    if (flash > 0) flash -= dt;
-
-    const speedFactor = 1 + (level - 1) * 0.12;
-    for (const o of objects) {
-      o.x += o.speed * speedFactor * dt;
-      if (o.speed > 0 && o.x > W + o.w) o.x = -o.w;
-      if (o.speed < 0 && o.x < -o.w) o.x = W + o.w;
-    }
-
-    const row = frog.y;
-    if (row >= 1 && row <= 4) {
-      const platform = objects.find(o =>
-        o.type === "water" && o.row === row &&
-        frog.x * CELL + 5 < o.x + o.w &&
-        frog.x * CELL + CELL - 5 > o.x
-      );
-      if (!platform) {
-        loseLife("Splash! You fell into the river!");
-      } else {
-        frog.x += platform.speed * dt / CELL;
-        if (frog.x < 0 || frog.x >= COLS) {
-          loseLife("The current swept you away!");
-        }
-      }
-    } else if (row >= 6 && row <= 10 && invulnerable <= 0) {
-      const fx = frog.x * CELL + 7, fw = CELL - 14;
-      const hit = objects.some(o =>
-        o.type === "road" && o.row === row &&
-        fx < o.x + o.w - 3 && fx + fw > o.x + 3
-      );
-      if (hit) loseLife("Traffic got you! Watch the road!");
-    }
-
-    for (const p of particles) p.life -= dt;
-    particles = particles.filter(p => p.life > 0);
-  }
-
-  function roundedRect(x, y, w, h, r, fill) {
-    ctx.fillStyle = fill;
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, r);
-    ctx.fill();
-  }
-
-  function drawBackground() {
-    ctx.fillStyle = "#122d38";
-    ctx.fillRect(0, 0, W, H);
-
-    // Safe start area
-    ctx.fillStyle = "#174b39";
-    ctx.fillRect(0, 11 * CELL, W, 4 * CELL);
-    for (let i = 0; i < 90; i++) {
-      const x = (i * 71 + 13) % W, y = 445 + (i * 37) % 145;
-      ctx.fillStyle = i % 2 ? "#23724b" : "#205c42";
-      ctx.fillRect(x, y, 3, 3);
-    }
-
-    // Road lanes
-    for (let row = 6; row <= 10; row++) {
-      ctx.fillStyle = row % 2 ? "#29333e" : "#303b47";
-      ctx.fillRect(0, row * CELL, W, CELL);
-      ctx.fillStyle = "#677580";
-      ctx.globalAlpha = 0.45;
-      for (let x = 0; x < W; x += 48) {
-        ctx.fillRect(x, row * CELL + 19, 25, 2);
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    // Water
-    ctx.fillStyle = "#125b85";
-    ctx.fillRect(0, CELL, W, 4 * CELL);
-    for (let i = 0; i < 40; i++) {
-      ctx.fillStyle = "#1977a1";
-      ctx.globalAlpha = 0.45;
-      ctx.fillRect((i * 61 + elapsed * 18) % W, CELL + (i * 29) % (4 * CELL), 14, 2);
-    }
-    ctx.globalAlpha = 1;
-
-    // Central median
-    ctx.fillStyle = "#1e6b43";
-    ctx.fillRect(0, 5 * CELL, W, CELL);
-    for (let i = 0; i < 24; i++) {
-      ctx.fillStyle = "#368c51";
-      ctx.beginPath();
-      ctx.arc(i * 21 + 6, 5 * CELL + 20 + Math.sin(i) * 8, 3,
+ }else if(frog.y>=6&&frog.y<=10&&invincible<=0){
+  var hit=objects.some(function(o){
+   return o.type==="car"&&o.row===frog.y&&frog.x*CELL+7<o.x+o.w&&frog.x*CELL+33>o.x;
+  });
+  if(hit)loseLife("A vehicle hit you! Watch the road!");
+ }
+}
+function frame(t){
+ var dt=Math.min((t-last)/1000||0,.04);last=t;
+ try{update(dt);draw()}catch(e){
+  msg.textContent="Game error: "+e.message;
+  console.error(e);
+ }
+ requestAnimationFrame(frame);
+}
+document.addEventListener("keydown",function(e){
+ var k=e.key.toLowerCase(),d=null;
+ if(k==="arrowup"||k==="w")d=[0,-1];
+ if(k==="arrowdown"||k==="s")d=[0,1];
+ if(k==="arrowleft"||k==="a")d=[-1,0];
+ if(k==="arrowright"||k==="d")d=[1,0];
+ if(d){e.preventDefault();if(!e.repeat)move(d[0],d[1])}
+ if(k===" "||k==="p"){e.preventDefault();togglePause()}
+ if(k==="enter"&&(!running||over))startGame();
+});
+document.querySelectorAll("[data-move]").forEach(function(b){
+ b.addEventListener("pointerdown",function(e){
+  e.preventDefault();var d=b.getAttribute("data-move").split(",");
+  move(Number(d[0]),Number(d[1]));
+ });
+});
+function togglePause(){
+ if(!running||over)return;
+ paused=!paused;
+ document.getElementById("pause").textContent=paused?"▶ RESUME":"Ⅱ PAUSE";
+ msg.textContent=paused?"Game paused.":"Back in action!";
+}
+document.getElementById("start").addEventListener("click",function(){if(!running||over)startGame()});
+document.getElementById("restart").addEventListener("click",startGame);
+document.getElementById("pause").addEventListener("click",togglePause);
+createObjects();
+draw();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
