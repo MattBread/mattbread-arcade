@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gemstone Quest | MattBread Arcade</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#090d1c;color:#f5f7ff;font-family:Arial,sans-serif;text-align:center}
+header{margin:8px auto 18px}
+.brand{color:#00e5ff;font-size:12px;letter-spacing:4px;font-weight:bold}
+h1{margin:10px 0;color:#72ffcb;font-size:clamp(32px,8vw,48px);text-shadow:0 0 20px #00d9a455}
+p{color:#aab9dc}
+.game{max-width:620px;margin:auto;background:#131a30;border:1px solid #34456c;border-radius:18px;padding:15px;box-shadow:0 0 30px #00e5ff12}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#090e20;border-radius:10px;padding:10px;color:#9aadd4;font-size:12px}
+.stat strong{display:block;color:#ffe36b;font-size:23px;margin-top:5px}
+canvas{display:block;width:100%;height:auto;background:#10172a;border:2px solid #00d9ff;border-radius:10px;image-rendering:pixelated;touch-action:none}
+#message{min-height:24px;margin:12px 0;color:#72ffcb;font-weight:bold}
+button{border:0;border-radius:10px;padding:12px 18px;margin:4px;background:linear-gradient(100deg,#00c7e9,#6758ff);color:white;font-weight:bold;font-size:15px;cursor:pointer}
+button:active{transform:scale(.97)}
+.pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,46px);gap:5px;justify-content:center;margin:10px auto}
+.pad button{margin:0;padding:5px;font-size:20px;touch-action:none}
+.pad .empty{visibility:hidden}
+.hint{font-size:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+<div class="brand">MATTBREAD ARCADE · MINI PACK 01</div>
+<h1>💎 GEMSTONE QUEST</h1>
+<p>Find the gems. Grab the key. Escape the maze!</p>
+</header>
+
+<main class="game">
+<div class="stats">
+<div class="stat">SCORE<strong id="score">0</strong></div>
+<div class="stat">GEMS<strong id="gems">0 / 6</strong></div>
+<div class="stat">BEST<strong id="best">0</strong></div>
+</div>
+<canvas id="board" width="480" height="480" aria-label="Gemstone Quest maze"></canvas>
+<div id="message">Collect all 6 gems and the key to unlock the exit!</div>
+<button id="start">START QUEST</button>
+<div class="pad" aria-label="Touch controls">
+<button class="empty" tabindex="-1"> </button><button data-dir="up">▲</button><button class="empty" tabindex="-1"> </button>
+<button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button>
+</div>
+</main>
+<p class="hint">Move with arrow keys or WASD. On phones, use the direction buttons.<br>Collect 6 gems, get the golden key, then reach the green exit. Avoid monsters!</p>
+
+<script>
+(() => {
+const canvas=document.getElementById("board");
+const ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const tile=40, cols=12, rows=12;
+const original=[
+"############",
+"#P...#....E#",
+"#.##.#.##..#",
+"#....#.....#",
+"###.####.#.#",
+"#...G....#.#",
+"#.####.#...#",
+"#G...#...G.#",
+"#.##.#.##..#",
+"#G...G...K.#",
+"#....#.....#",
+"############"
+];
+let map,player,gems,key,score,best=0,playing=false,won=false;
+let monsters=[],moveLock=false,turn=0,raf=0;
+
+try{best=Number(localStorage.getItem("mbaGemstoneBest"))||0}catch(e){}
+$("best").textContent=best;
+
+function newGame(){
+ map=original.map(r=>r.split(""));
+ player={x:1,y:1};
+ gems=[];key=null;score=0;turn=0;won=false;
+ monsters=[{x:9,y:3},{x:2,y:9}];
+ for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+   if(map[y][x]==="G"){gems.push({x,y});map[y][x]="."}
+   if(map[y][x]==="K"){key={x,y};map[y][x]="."}
+   if(map[y][x]==="P")map[y][x]=".";
+ }
+ playing=true;
+ $("start").textContent="RESTART QUEST";
+ $("message").textContent="Collect all 6 gems and the key!";
+ updateStats();draw();
+}
+function updateStats(){
+ $("score").textContent=score;
+ $("gems").textContent=(6-gems.length)+" / 6";
+ $("best").textContent=best;
+}
+function wall(x,y){return x<0||y<0||x>=cols||y>=rows||map[y][x]==="#"}
+function draw(){
+ ctx.clearRect(0,0,480,480);
+ for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+   const px=x*tile,py=y*tile;
+   ctx.fillStyle=(x+y)%2?"#18223a":"#151e33";
+   ctx.fillRect(px,py,tile,tile);
+   if(map[y][x]==="#"){
+     ctx.fillStyle="#394967";ctx.fillRect(px+2,py+2,36,36);
+     ctx.fillStyle="#536582";ctx.fillRect(px+4,py+4,32,5);
+     ctx.fillStyle="#273550";ctx.fillRect(px+4,py+12,32,22);
+   }else{
+     ctx.strokeStyle="#202c46";ctx.strokeRect(px,py,tile,tile);
+   }
+ }
+ // Exit
+ const exit={x:10,y:1};
+ ctx.fillStyle=(gems.length===0&&key===null)?"#35f49b":"#a0adca";
+ ctx.fillRect(exit.x*tile+8,exit.y*tile+5,24,30);
+ ctx.fillStyle="#0a1324";
+ ctx.fillRect(exit.x*tile+13,exit.y*tile+10,14,25);
+ ctx.fillStyle="#ffe36b";
+ ctx.beginPath();ctx.arc(exit.x*tile+23,exit.y*tile+22,2,0,Math.PI*2);ctx.fill();
+
+ // Gems
+ for(const g of gems){
+   const x=g.x*tile+20,y=g.y*tile+20;
+   ctx.fillStyle="#00f4ff";ctx.beginPath();
+   ctx.moveTo(x,y-13);ctx.lineTo(x+11,y-3);ctx.lineTo(x+7,y+11);
+   ctx.lineTo(x-7,y+11);ctx.lineTo(x-11,y-3);ctx.closePath();ctx.fill();
+   ctx.fillStyle="#b8ffff";ctx.beginPath();
+   ctx.moveTo(x,y-9);ctx.lineTo(x+4,y-2);ctx.lineTo(x-3,y+5);ctx.closePath();ctx.fill();
+ }
+ // Key
+ if(key){
+   let x=key.x*tile+20,y=key.y*tile+20;
+   ctx.strokeStyle="#ffe36b";ctx.lineWidth=5;
+   ctx.beginPath();ctx.arc(x-4,y-4,6,0,Math.PI*2);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(x+1,y+1);ctx.lineTo(x+10,y+10);ctx.lineTo(x+6,y+13);ctx.moveTo(x+6,y+6);ctx.lineTo(x+3,y+9);ctx.stroke();
+   ctx.lineWidth=1;
+ }
+ // Monsters
+ for(const m of monsters){
+   let x=m.x*tile+20,y=m.y*tile+20;
+   ctx.fillStyle="#ff547b";ctx.beginPath();ctx.arc(x,y,13,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="white";ctx.fillRect(x-7,y-5,5,6);ctx.fillRect(x+3,y-5,5,6);
+   ctx.fillStyle="#20223c";ctx.fillRect(x-5,y-3,3,4);ctx.fillRect(x+5,y-3,3,4);
+   ctx.fillStyle="#ffb1c1";ctx.fillRect(x-5,y+6,10,3);
+ }
+ // Player
+ const px=player.x*tile+20,py=player.y*tile+20;
+ ctx.fillStyle="#00e5ff";ctx.beginPath();ctx.arc(px,py,13,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#fff";ctx.fillRect(px-7,py-5,5,6);ctx.fillRect(px+3,py-5,5,6);
+ ctx.fillStyle="#17213a";ctx.fillRect(px-5,py-3,3,4);ctx.fillRect(px+5,py-3,3,4);
+ if(!playing){
+   ctx.fillStyle="#071022bb";ctx.fillRect(20,180,440,120);
+   ctx.textAlign="center";ctx.fillStyle="#fff";
+   ctx.font="bold 25px Arial";ctx.fillText(won?"QUEST COMPLETE!":"GEMSTONE QUEST",240,225);
+   ctx.font="15px Arial";ctx.fillStyle="#72ffcb";
+   ctx.fillText(won?"You escaped with the treasure!":"Press START QUEST to begin",240,257);
+ }
+}
+function finish(success){
+ playing=false;won=success;
+ if(score>best){best=score;try{localStorage.setItem("mbaGemstoneBest",String(best))}catch(e){}}
+ $("message").textContent=success?"You escaped! Final score: "+score:"Quest over! Final score: "+score;
+ $("start").textContent="PLAY AGAIN";
+ updateStats();draw();
+}
+function move(dx,dy){
+ if(!playing||moveLock)return;
+ const nx=player.x+dx,ny=player.y+dy;
+ if(wall(nx,ny))return;
+ player.x=nx;player.y=ny;turn++;
+ score+=1;
+
+ // Collect gem
+ const gi=gems.findIndex(g=>g.x===nx&&g.y===ny);
+ if(gi>=0){gems.splice(gi,1);score+=100;$("message").textContent="Gem collected! Keep going!";}
+ // Collect key
+ if(key&&key.x===nx&&key.y===ny){key=null;score+=150;$("message").textContent="Golden key collected! Find the exit!";}
+ // Exit requires all gems and the key
+ if(nx===10&&ny===1){
+   if(gems.length===0&&key===null){score+=250;updateStats();finish(true);return}
+   $("message").textContent="The exit is locked! Find every gem and the key.";
+ }
+ // Monsters move every other player move
+ if(turn%2===0){
+   for(const m of monsters){
+     const options=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-.5);
+     for(const [mx,my] of options){
+       const xx=m.x+mx,yy=m.y+my;
+       if(!wall(xx,yy)&&!(xx===10&&yy===1)&&!(xx===player.x&&yy===player.y)){
+         m.x=xx;m.y=yy;break;
+       }
+     }
+   }
+ }
+ if(monsters.some(m=>m.x===player.x&&m.y===player.y)){finish(false);return}
+ updateStats();draw();
+}
+document.addEventListener("keydown",e=>{
+ const dirs={ArrowUp:[0,-1],w:[0,-1],W:[0,-1],ArrowDown:[0,1],s:[0,1],S:[0,1],ArrowLeft:[-1,0],a:[-1,0],A:[-1,0],ArrowRight:[1,0],d:[1,0],D:[1,0]};
+ if(dirs[e.key]){e.preventDefault();move(...dirs[e.key])}
+});
+document.querySelectorAll("[data-dir]").forEach(btn=>{
+ btn.addEventListener("click",()=>{
+  const dirs={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+  move(...dirs[btn.dataset.dir]);
+ });
+});
+$("start").addEventListener("click",newGame);
+player={x:1,y:1};map=original.map(r=>r.split(""));
+gems=[];key=null;score=0;monsters=[];draw();
+})();
+</script>
+</body>
+</html>
