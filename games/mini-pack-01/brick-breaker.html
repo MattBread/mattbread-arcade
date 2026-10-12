@@ -1,1 +1,167 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brick Breaker | MattBread Arcade</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px 12px;background:#080b16;color:#f5f7ff;font-family:Arial,sans-serif;text-align:center}
+.wrap{max-width:620px;margin:auto}
+h1{font-size:clamp(30px,6vw,46px);color:#00f5ff;text-shadow:0 0 18px #00f5ff77;margin:8px 0}
+p{color:#bac5df;line-height:1.5}
+.stats{display:flex;gap:8px;margin:18px 0}
+.stat{flex:1;background:#151a2b;border:1px solid #303b55;border-radius:12px;padding:12px 4px}
+.stat small{display:block;color:#aab5d0;margin-bottom:5px}
+.stat strong{font-size:clamp(20px,4vw,26px);color:#00f5ff}
+canvas{display:block;width:100%;height:auto;border:2px solid #00dce8;border-radius:12px;background:#090d1b;touch-action:none}
+button{margin:10px 5px;padding:12px 20px;border:0;border-radius:10px;background:#00dce8;color:#06111a;font-weight:bold;font-size:16px;cursor:pointer}
+button:hover{filter:brightness(1.15)}
+#message{min-height:24px;color:#7ef7ff;font-weight:bold}
+a{display:inline-block;margin-top:14px;color:#00f5ff;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🧱 BRICK BREAKER</h1>
+<p>Smash every brick. Keep the ball alive!</p>
+<div class="stats">
+<div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+<div class="stat"><small>LIVES</small><strong id="lives">3</strong></div>
+<div class="stat"><small>BRICKS</small><strong id="bricks">40</strong></div>
+</div>
+<canvas id="game" width="600" height="600" aria-label="Brick Breaker game"></canvas>
+<p id="message">Press Start to launch the ball. Move your paddle with your mouse, touch, or arrow keys.</p>
+<button id="start">▶ Start / Restart</button>
+<a href="index.html">← Back to Mini Pack 01</a>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score');
+const livesEl=document.getElementById('lives');
+const bricksEl=document.getElementById('bricks');
+const message=document.getElementById('message');
+const startBtn=document.getElementById('start');
+const W=600,H=600;
+const paddle={x:250,y:555,w:100,h:13,speed:430};
+const ball={x:300,y:535,r:8,vx:220,vy:-300};
+const colors=['#00f5ff','#49f58c','#ffe45e','#ff9b42','#ff4d88'];
+let bricks=[],score=0,lives=3,running=false,ended=false,last=0,raf=0;
+let left=false,right=false,pointerActive=false;
+function makeBricks(){
+bricks=[];
+for(let row=0;row<5;row++)for(let col=0;col<8;col++){
+bricks.push({x:24+col*69,y:65+row*29,w:61,h:19,alive:true,color:colors[row]});
+}
+bricksEl.textContent=bricks.length;
+}
+function reset(){
+cancelAnimationFrame(raf);
+score=0;lives=3;running=true;ended=false;last=0;
+paddle.x=250;ball.x=300;ball.y=535;ball.vx=220;ball.vy=-300;
+scoreEl.textContent=score;livesEl.textContent=lives;
+makeBricks();message.textContent='Ball launched! Smash those bricks!';
+raf=requestAnimationFrame(loop);
+}
+function serve(){
+ball.x=paddle.x+paddle.w/2;ball.y=paddle.y-ball.r-1;
+ball.vx=(Math.random()<.5?-1:1)*220;ball.vy=-300;
+}
+function finish(won){
+running=false;ended=true;cancelAnimationFrame(raf);
+message.textContent=won?'YOU CLEARED THE WALL! Final score: '+score:'GAME OVER! Final score: '+score+'. Restart to play again.';
+draw();
+}
+function update(dt){
+if(left)paddle.x-=paddle.speed*dt;
+if(right)paddle.x+=paddle.speed*dt;
+paddle.x=Math.max(0,Math.min(W-paddle.w,paddle.x));
+ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+if(ball.x-ball.r<0){ball.x=ball.r;ball.vx=Math.abs(ball.vx)}
+if(ball.x+ball.r>W){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx)}
+if(ball.y-ball.r<0){ball.y=ball.r;ball.vy=Math.abs(ball.vy)}
+if(ball.vy>0&&ball.y+ball.r>=paddle.y&&ball.y-ball.r<=paddle.y+paddle.h&&ball.x>=paddle.x&&ball.x<=paddle.x+paddle.w){
+const offset=(ball.x-(paddle.x+paddle.w/2))/(paddle.w/2);
+ball.vx=offset*360;
+ball.vy=-Math.max(260,Math.sqrt(300*300+220*220));
+ball.y=paddle.y-ball.r;
+}
+for(const b of bricks){
+if(!b.alive)continue;
+if(ball.x+ball.r>b.x&&ball.x-ball.r<b.x+b.w&&ball.y+ball.r>b.y&&ball.y-ball.r<b.y+b.h){
+b.alive=false;score+=10;scoreEl.textContent=score;
+bricksEl.textContent=bricks.filter(x=>x.alive).length;
+const overlapX=Math.min(ball.x+ball.r-b.x,b.x+b.w-(ball.x-ball.r));
+const overlapY=Math.min(ball.y+ball.r-b.y,b.y+b.h-(ball.y-ball.r));
+if(overlapX<overlapY)ball.vx*=-1;else ball.vy*=-1;
+ball.vx*=1.008;ball.vy*=1.008;
+if(bricks.every(x=>!x.alive)){finish(true);return}
+break;
+}
+}
+if(ball.y-ball.r>H){
+lives--;livesEl.textContent=lives;
+if(lives<=0){finish(false);return}
+serve();message.textContent='Ball lost! '+lives+' lives remaining.';
+}
+}
+function draw(){
+ctx.clearRect(0,0,W,H);
+const bg=ctx.createLinearGradient(0,0,W,H);
+bg.addColorStop(0,'#101a32');bg.addColorStop(1,'#100c20');
+ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ctx.strokeStyle='#1b2943';ctx.lineWidth=1;
+for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+for(const b of bricks){
+if(!b.alive)continue;
+ctx.save();ctx.shadowColor=b.color;ctx.shadowBlur=9;
+ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);
+ctx.shadowBlur=0;ctx.fillStyle='#ffffff45';ctx.fillRect(b.x+3,b.y+3,b.w-6,3);
+ctx.restore();
+}
+ctx.save();ctx.shadowColor='#00f5ff';ctx.shadowBlur=16;
+ctx.fillStyle='#00f5ff';ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);ctx.restore();
+ctx.save();ctx.shadowColor='#fff';ctx.shadowBlur=18;
+ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();ctx.restore();
+if(!running){
+ctx.fillStyle='#050714d9';ctx.fillRect(60,250,480,105);
+ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 30px Arial';
+ctx.fillText(ended?(bricks.every(b=>!b.alive)?'LEVEL CLEARED':'GAME OVER'):'READY TO BREAK',300,290);
+ctx.font='18px Arial';ctx.fillStyle='#00f5ff';
+ctx.fillText(ended?'Final score: '+score:'Press Start to play',300,325);
+}
+}
+function loop(now){
+if(!running)return;
+const dt=last?Math.min((now-last)/1000,.025):0;last=now;
+update(dt);draw();
+if(running)raf=requestAnimationFrame(loop);
+}
+function setPaddleFromPointer(e){
+const rect=canvas.getBoundingClientRect();
+paddle.x=(e.clientX-rect.left)*W/rect.width-paddle.w/2;
+paddle.x=Math.max(0,Math.min(W-paddle.w,paddle.x));
+}
+canvas.addEventListener('pointerdown',e=>{pointerActive=true;setPaddleFromPointer(e)});
+canvas.addEventListener('pointermove',e=>{if(pointerActive)setPaddleFromPointer(e)});
+window.addEventListener('pointerup',()=>pointerActive=false);
+document.addEventListener('keydown',e=>{
+if(['ArrowLeft','ArrowRight','a','A','d','D'].includes(e.key))e.preventDefault();
+if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=true;
+if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=true;
+});
+document.addEventListener('keyup',e=>{
+if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')left=false;
+if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')right=false;
+});
+startBtn.addEventListener('click',reset);
+makeBricks();draw();
+})();
+</script>
+</body>
+</html>
+
