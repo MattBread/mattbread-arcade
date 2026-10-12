@@ -1,1 +1,140 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Memory Matrix | MattBread Arcade</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:22px 12px;background:#090b16;color:#f5f7ff;font-family:Arial,sans-serif;text-align:center}
+.wrap{max-width:540px;margin:auto}
+h1{font-size:clamp(30px,6vw,46px);color:#00f5ff;text-shadow:0 0 18px #00f5ff66;margin:8px 0}
+p{color:#b9c5df;line-height:1.5}
+.stats{display:flex;gap:8px;margin:18px 0}
+.stat{flex:1;background:#151a2b;border:1px solid #303a55;border-radius:12px;padding:12px 4px}
+.stat small{display:block;color:#aab5d0;margin-bottom:5px}
+.stat strong{font-size:clamp(20px,4vw,26px);color:#00f5ff}
+#grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:390px;margin:18px auto}
+.tile{aspect-ratio:1;border:2px solid #35405e;border-radius:15px;background:linear-gradient(145deg,#19233e,#101426);cursor:pointer;transition:background .12s,transform .12s;touch-action:manipulation}
+.tile:active{transform:scale(.96)}
+.tile.lit{background:#00dce8;border-color:#b7ffff;box-shadow:0 0 25px #00f5ff99;transform:scale(.96)}
+.tile.good{background:#39ed9b;border-color:#c2ffe4;box-shadow:0 0 25px #39ed9b88}
+.tile.bad{background:#ff386d;border-color:#ffc0d0;box-shadow:0 0 25px #ff386d88}
+button{margin:8px 4px;padding:12px 20px;border:0;border-radius:10px;background:#00dce8;color:#07111b;font-weight:bold;font-size:16px;cursor:pointer}
+button:hover{filter:brightness(1.15)}
+#message{min-height:26px;color:#7ef7ff;font-weight:bold}
+a{display:inline-block;margin-top:14px;color:#00f5ff;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🧠 MEMORY MATRIX</h1>
+<p>Watch the glowing tiles. Then repeat the sequence in the correct order!</p>
+<div class="stats">
+<div class="stat"><small>LEVEL</small><strong id="level">1</strong></div>
+<div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+<div class="stat"><small>BEST</small><strong id="best">0</strong></div>
+</div>
+<div id="grid" aria-label="Memory game tiles">
+<button class="tile" data-i="0" aria-label="Tile 1"></button>
+<button class="tile" data-i="1" aria-label="Tile 2"></button>
+<button class="tile" data-i="2" aria-label="Tile 3"></button>
+<button class="tile" data-i="3" aria-label="Tile 4"></button>
+<button class="tile" data-i="4" aria-label="Tile 5"></button>
+<button class="tile" data-i="5" aria-label="Tile 6"></button>
+<button class="tile" data-i="6" aria-label="Tile 7"></button>
+<button class="tile" data-i="7" aria-label="Tile 8"></button>
+<button class="tile" data-i="8" aria-label="Tile 9"></button>
+</div>
+<p id="message">Press Start to begin your memory challenge.</p>
+<button id="start">▶ Start / Restart</button>
+<p>Each level adds another tile to remember. Complete a level to earn 100 points!</p>
+<a href="index.html">← Back to Mini Pack 01</a>
+</div>
+<script>
+(()=>{
+const tiles=[...document.querySelectorAll('.tile')];
+const levelEl=document.getElementById('level');
+const scoreEl=document.getElementById('score');
+const bestEl=document.getElementById('best');
+const message=document.getElementById('message');
+const startBtn=document.getElementById('start');
+let sequence=[],input=[],level=1,score=0,best=0;
+let active=false,showing=false,roundId=0;
+try{best=Number(localStorage.getItem('memoryMatrixBest'))||0}catch(e){}
+bestEl.textContent=best;
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function light(i,kind='lit'){
+tiles[i].classList.add(kind);
+setTimeout(()=>tiles[i].classList.remove(kind),260);
+}
+function clearLights(){tiles.forEach(t=>t.classList.remove('lit','good','bad'))}
+async function showSequence(){
+const id=roundId;showing=true;input=[];
+tiles.forEach(t=>t.disabled=true);
+message.textContent='Watch carefully...';
+await sleep(450);
+for(const i of sequence){
+if(id!==roundId)return;
+clearLights();tiles[i].classList.add('lit');
+await sleep(Math.max(220,520-level*12));
+tiles[i].classList.remove('lit');
+await sleep(180);
+}
+if(id!==roundId)return;
+showing=false;
+tiles.forEach(t=>t.disabled=false);
+message.textContent='Your turn! Repeat the sequence.';
+}
+function nextRound(){
+roundId++;sequence=[];input=[];active=true;showing=true;
+for(let i=0;i<level+2;i++){
+let n=Math.floor(Math.random()*9);
+if(i>0&&n===sequence[i-1])n=(n+1+Math.floor(Math.random()*7))%9;
+sequence.push(n);
+}
+levelEl.textContent=level;
+showSequence();
+}
+function start(){
+roundId++;level=1;score=0;active=true;showing=false;
+scoreEl.textContent='0';levelEl.textContent='1';clearLights();
+tiles.forEach(t=>t.disabled=true);
+nextRound();
+}
+function endGame(){
+active=false;showing=false;roundId++;tiles.forEach(t=>t.disabled=true);
+clearLights();message.textContent='Game over! Final score: '+score+'. Press Restart to try again.';
+}
+tiles.forEach(tile=>{
+tile.disabled=true;
+tile.addEventListener('click',()=>{
+if(!active||showing)return;
+const i=Number(tile.dataset.i);
+light(i);
+if(i!==sequence[input.length]){
+tile.classList.add('bad');
+setTimeout(()=>tile.classList.remove('bad'),300);
+message.textContent='Not quite! That sequence got you.';
+endGame();return;
+}
+input.push(i);
+tile.classList.add('good');setTimeout(()=>tile.classList.remove('good'),220);
+if(input.length===sequence.length){
+score+=100;level++;
+scoreEl.textContent=score;
+if(score>best){best=score;bestEl.textContent=best;try{localStorage.setItem('memoryMatrixBest',String(best))}catch(e){}}
+tiles.forEach(t=>t.disabled=true);
+message.textContent='Perfect memory! Get ready for the next level.';
+const id=roundId;
+setTimeout(()=>{if(active&&id===roundId)nextRound()},750);
+}
+});
+});
+startBtn.addEventListener('click',start);
+})();
+</script>
+</body>
+</html>
+
