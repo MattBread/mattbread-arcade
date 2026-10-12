@@ -44,6 +44,16 @@ h2{margin:7px 0 0;font-size:clamp(25px,4vw,35px);letter-spacing:-1.1px}
 .search{width:min(290px,100%);background:#0e1310;border:1px solid #ffffff1f;border-radius:11px;color:var(--text);outline:none;padding:12px 14px}
 .search:focus{border-color:var(--green);box-shadow:0 0 0 3px #ff304f14}
 .quick-links{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:26px 0 42px}
+  .game-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-top:20px}
+.game-card{padding:20px;border:1px solid #ffffff18;border-radius:14px;background:linear-gradient(145deg,#151d18,#0c100d);display:flex;flex-direction:column;gap:10px}
+.game-card:hover{border-color:var(--green);transform:translateY(-2px)}
+.game-card .game-icon{font-size:30px}
+.game-card h3{margin:0;font-size:17px}
+.game-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.6;flex:1}
+.game-card a{display:inline-block;text-decoration:none;text-align:center;padding:10px;border-radius:9px;background:var(--green);color:#10150b;font-size:12px;font-weight:900}
+.game-status{font-size:10px;color:#65b5ff;text-transform:uppercase;letter-spacing:1px;font-weight:800}
+@media(max-width:780px){.game-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.game-grid{grid-template-columns:1fr}}
 .quick-link{text-align:left;padding:18px;min-height:112px;border-radius:14px;color:var(--text);background:linear-gradient(145deg,#151d18f2,#0c100df2);border:1px solid #ffffff14;transition:.2s}
 .quick-link:hover{border-color:var(--green);transform:translateY(-3px)}
 .quick-icon{font-size:22px;display:block;margin-bottom:15px}
@@ -146,10 +156,7 @@ h1{letter-spacing:-2px}
 </div>
 <input class="search" id="library-search" type="search" placeholder="Search games or genres…" aria-label="Search games or genres">
 </div>
-<div class="empty-state" id="library-state">
-<strong>🎮 Your library starts here.</strong>
-<p>This homepage layout is ready. The next step is connecting your existing games to the library without changing their game files.</p>
-</div>
+<div class="game-grid" id="library-games"></div>
 </section>
 
 <section class="view" id="view-az">
@@ -193,6 +200,44 @@ h1{letter-spacing:-2px}
 </footer>
 
 <script>
+  const games = [
+  {title:"Paddle Blitz",genre:"Arcade",icon:"🏓",file:"paddle-blitz.html"},
+  {title:"Snake Circuit",genre:"Arcade",icon:"🐍",file:"snake-circuit.html"},
+  {title:"Meteor Tap",genre:"Casual",icon:"☄️",file:"meteor-tap.html"},
+  {title:"Sky Hopper",genre:"Platformer",icon:"🪂",file:"sky-hopper.html"},
+  {title:"Target Pop",genre:"Arcade",icon:"🎯",file:"target-pop.html"},
+  {title:"Memory Matrix",genre:"Puzzle",icon:"🧠",file:"memory-matrix.html"},
+  {title:"Brick Breaker",genre:"Arcade",icon:"🧱",file:"brick-breaker.html"},
+  {title:"Lane Racer",genre:"Racing",icon:"🏎️",file:"lane-racer.html"},
+  {title:"Quick Math",genre:"Puzzle",icon:"🔢",file:"quick-math.html"},
+  {title:"Gemstone Quest",genre:"Adventure",icon:"💎",file:"gemstone-quest.html"}
+];
+
+function renderGames(){
+  const grid = document.getElementById("library-games");
+  const search = document.getElementById("library-search");
+  if(!grid) return;
+
+  const term = (search?.value || "").trim().toLowerCase();
+  const filtered = games.filter(g =>
+    (g.title + " " + g.genre).toLowerCase().includes(term)
+  );
+
+  grid.innerHTML = filtered.length ? filtered.map(g => `
+    <article class="game-card">
+      <span class="game-icon">${g.icon}</span>
+      <h3>${g.title}</h3>
+      <span class="game-status">${g.genre}</span>
+      <p>Play ${g.title} in MattBread Arcade.</p>
+      <a href="games/mini-pack-01/${g.file}">PLAY GAME ↗</a>
+    </article>
+  `).join("") : `
+    <div class="empty-state">
+      <strong>No games found.</strong>
+      <p>Try another title or genre.</p>
+    </div>
+  `;
+}
 const genres=[
 ["Action","Fast-paced gameplay"],
 ["Adventure","Explore and discover"],
