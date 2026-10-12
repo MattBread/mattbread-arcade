@@ -1,1 +1,148 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lane Racer | MattBread Arcade</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px 12px;background:#080b15;color:#f5f7ff;font-family:Arial,sans-serif;text-align:center}
+.wrap{max-width:520px;margin:auto}
+h1{font-size:clamp(32px,6vw,46px);color:#ffb52e;text-shadow:0 0 18px #ff9d2866;margin:8px 0}
+p{color:#bdc6df;line-height:1.5}
+.stats{display:flex;gap:8px;margin:18px 0}
+.stat{flex:1;background:#151a2b;border:1px solid #303b55;border-radius:12px;padding:12px 4px}
+.stat small{display:block;color:#aab5d0;margin-bottom:5px}
+.stat strong{font-size:clamp(20px,4vw,26px);color:#ffca64}
+canvas{display:block;width:100%;height:auto;border:2px solid #ffb52e;border-radius:12px;background:#111625;touch-action:manipulation}
+.controls{display:flex;justify-content:center;gap:20px}
+button{margin:10px 5px;padding:12px 20px;border:0;border-radius:10px;background:#ffb52e;color:#1b1100;font-weight:bold;font-size:16px;cursor:pointer}
+.controls button{min-width:100px;font-size:20px}
+button:hover{filter:brightness(1.15)}
+#message{min-height:24px;color:#ffd47a;font-weight:bold}
+a{display:inline-block;margin-top:14px;color:#ffca64;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🏎️ LANE RACER</h1>
+<p>Dodge traffic, switch lanes, and see how long you can survive!</p>
+<div class="stats">
+<div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+<div class="stat"><small>BEST</small><strong id="best">0</strong></div>
+<div class="stat"><small>SPEED</small><strong id="speed">1x</strong></div>
+</div>
+<canvas id="game" width="420" height="600" aria-label="Lane Racer driving game"></canvas>
+<p id="message">Press Start to begin. Use ← → or A/D to change lanes.</p>
+<button id="start">▶ Start / Restart</button>
+<div class="controls">
+<button id="left">⬅ LEFT</button>
+<button id="right">RIGHT ➡</button>
+</div>
+<p>Keyboard: Arrow keys or A/D. On mobile, use the buttons or tap the lane you want.</p>
+<a href="index.html">← Back to Mini Pack 01</a>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score'),bestEl=document.getElementById('best');
+const speedEl=document.getElementById('speed'),message=document.getElementById('message');
+const startBtn=document.getElementById('start');
+const W=420,H=600,laneW=120,roadX=30;
+let lane=1,playerY=490,traffic=[],score=0,best=0;
+let playing=false,ended=false,last=0,spawn=0,roadOffset=0,raf=0;
+try{best=Number(localStorage.getItem('laneRacerBest'))||0}catch(e){}
+bestEl.textContent=best;
+const laneCenter=i=>roadX+laneW*i+laneW/2;
+function reset(){
+cancelAnimationFrame(raf);lane=1;traffic=[];score=0;spawn=0;roadOffset=0;last=0;
+playing=true;ended=false;
+scoreEl.textContent='0';speedEl.textContent='1x';
+message.textContent='Race on! Avoid the traffic!';
+raf=requestAnimationFrame(loop);
+}
+function changeLane(dir){
+if(!playing)return;
+lane=Math.max(0,Math.min(2,lane+dir));
+}
+function makeCar(){
+let choices=[0,1,2].filter(i=>!(traffic.some(t=>t.lane===i&&t.y<150)));
+if(!choices.length)return;
+const l=choices[Math.floor(Math.random()*choices.length)];
+traffic.push({lane:l,y:-90,w:54,h:82,speed:190+Math.min(score*.65,180),color:['#ff4b6e','#4da8ff','#b46bff','#4ce6a3'][Math.floor(Math.random()*4)]});
+}
+function update(dt){
+const speed=210+Math.min(score*.7,200);
+roadOffset=(roadOffset+speed*dt)%80;
+spawn+=dt;
+if(spawn>Math.max(.48,1.05-score*.002)){spawn=0;makeCar()}
+for(let i=traffic.length-1;i>=0;i--){
+const t=traffic[i];t.y+=t.speed*dt;
+if(t.y>H+100){traffic.splice(i,1);score+=1;scoreEl.textContent=score;
+if(score>best){best=score;bestEl.textContent=best;try{localStorage.setItem('laneRacerBest',String(best))}catch(e){}}
+speedEl.textContent=(1+Math.floor(score/15)*.2).toFixed(1)+'x';
+continue;
+}
+const px=laneCenter(lane),cx=laneCenter(t.lane);
+if(Math.abs(px-cx)<43&&playerY<t.y+t.h/2+35&&playerY+50>t.y-t.h/2+8){finish();return}
+}
+}
+function car(x,y,color,player=false){
+ctx.save();ctx.translate(x,y);
+ctx.fillStyle='#05070d77';ctx.fillRect(-27, -34, 54, 76);
+ctx.fillStyle='#171b25';ctx.fillRect(-30,-23,9,22);ctx.fillRect(21,-23,9,22);ctx.fillRect(-30,15,9,22);ctx.fillRect(21,15,9,22);
+ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(-25,-40,50,80,9);ctx.fill();
+ctx.fillStyle=player?'#a9ffff':'#bce9ff';ctx.beginPath();ctx.roundRect(-18,-25,36,22,5);ctx.fill();
+ctx.fillStyle='#16283a';ctx.fillRect(-17,5,34,17);
+ctx.fillStyle='#fff0ad';ctx.fillRect(-19,-38,10,5);ctx.fillRect(9,-38,10,5);
+ctx.fillStyle='#ff304d';ctx.fillRect(-19,32,10,5);ctx.fillRect(9,32,10,5);
+if(player){ctx.strokeStyle='#00f5ff';ctx.lineWidth=2;ctx.shadowColor='#00f5ff';ctx.shadowBlur=12;ctx.strokeRect(-25,-40,50,80)}
+ctx.restore();
+}
+function draw(){
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#101d19';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#343b45';ctx.fillRect(roadX,0,laneW*3,H);
+ctx.fillStyle='#f7d36b';ctx.fillRect(roadX-4,0,4,H);ctx.fillRect(roadX+laneW*3,0,4,H);
+ctx.fillStyle='#c8d0d8';
+for(let l=1;l<3;l++)for(let y=-80+roadOffset;y<H;y+=80)ctx.fillRect(roadX+laneW*l-2,y,4,42);
+for(const t of traffic)car(laneCenter(t.lane),t.y,t.color);
+car(laneCenter(lane),playerY,'#00cbd8',true);
+if(!playing){
+ctx.fillStyle='#050914d9';ctx.fillRect(25,235,370,120);
+ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 28px Arial';
+ctx.fillText(ended?'CRASH!':'READY TO RACE',210,280);
+ctx.font='18px Arial';ctx.fillStyle='#ffca64';
+ctx.fillText(ended?'Score: '+score:'Press Start to drive',210,316);
+}
+}
+function loop(now){
+if(!playing)return;
+const dt=last?Math.min((now-last)/1000,.035):0;last=now;
+update(dt);draw();if(playing)raf=requestAnimationFrame(loop);
+}
+function finish(){
+playing=false;ended=true;cancelAnimationFrame(raf);
+message.textContent='Crash! You scored '+score+'. Restart and beat your record!';
+draw();
+}
+function pointerLane(e){
+const rect=canvas.getBoundingClientRect();
+const x=(e.clientX-rect.left)*W/rect.width;
+if(x<roadX+laneW)lane=0;else if(x<roadX+laneW*2)lane=1;else lane=2;
+}
+canvas.addEventListener('pointerdown',e=>{if(playing)pointerLane(e)});
+document.addEventListener('keydown',e=>{
+if(['ArrowLeft','ArrowRight','a','A','d','D'].includes(e.key))e.preventDefault();
+if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')changeLane(-1);
+if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')changeLane(1);
+});
+document.getElementById('left').addEventListener('click',()=>changeLane(-1));
+document.getElementById('right').addEventListener('click',()=>changeLane(1));
+startBtn.addEventListener('click',reset);
+draw();
+})();
+</script>
+</body>
+</html>
+
