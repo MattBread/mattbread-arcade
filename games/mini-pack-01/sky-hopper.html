@@ -1,1 +1,314 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky Hopper | MattBread Arcade</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d20;color:#f4f7ff;font-family:Arial,sans-serif;text-align:center;padding:18px}
+header{margin:10px auto 18px}
+.brand{color:#00e5ff;font-weight:bold;letter-spacing:4px;font-size:12px}
+h1{font-size:clamp(36px,8vw,56px);margin:10px 0;color:#ffe14a;text-shadow:3px 4px #e94e35}
+p{color:#a9bbef}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.5fr);gap:14px;max-width:850px;margin:auto}
+.panel{background:#101a38;border:1px solid #147bff;border-radius:15px;padding:16px}
+.stat{font-size:13px;color:#00dfff;text-align:left;margin:8px 0}
+.stat strong{display:block;color:#ffe14a;font-size:28px;margin-top:4px}
+canvas{width:100%;height:auto;display:block;border:4px solid #00dfff;border-radius:14px;background:#36baff;touch-action:none}
+.gamewrap{min-width:0}
+button{cursor:pointer;border:0;border-radius:12px;padding:14px 20px;background:linear-gradient(100deg,#00c8ff,#625cff);color:white;font-weight:bold;font-size:16px;margin:12px 4px}
+button:active{transform:scale(.97)}
+.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.controls button{min-width:65px;font-size:22px;touch-action:none}
+#message{min-height:22px;color:#00e5ff;font-weight:bold}
+.hint{font-size:13px;line-height:1.6}
+@media(max-width:600px){.layout{grid-template-columns:1fr}.statsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.panel{padding:12px}.stat{text-align:center}.stat strong{font-size:22px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">MATTBREAD ARCADE</div>
+  <h1>SKY HOPPER</h1>
+  <p>Jump. Collect. Reach the top!</p>
+</header>
+
+<div class="layout">
+  <aside class="panel statsrow">
+    <div class="stat">SCORE<strong id="score">0</strong></div>
+    <div class="stat">BEST<strong id="best">0</strong></div>
+    <div class="stat">COINS<strong id="coins">0</strong></div>
+  </aside>
+  <main class="gamewrap">
+    <canvas id="game" width="480" height="620" aria-label="Sky Hopper platform game"></canvas>
+    <div id="message">Press START GAME to play!</div>
+    <div class="controls">
+      <button id="left" aria-label="Move left">◀</button>
+      <button id="jump" aria-label="Jump">▲</button>
+      <button id="right" aria-label="Move right">▶</button>
+    </div>
+    <button id="start">START GAME</button>
+  </main>
+</div>
+<p class="hint">Move: ← → or A / D &nbsp; · &nbsp; Jump: ↑, W, Space or ▲<br>Collect coins, land on platforms, and reach the flag!</p>
+
+<script>
+(() => {
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const W=canvas.width,H=canvas.height;
+const $=id=>document.getElementById(id);
+let best=0;
+try{best=Number(localStorage.getItem("mbaSkyHopperBest"))||0}catch(e){}
+$("best").textContent=best;
+
+let player,platforms,coins,keys={},score=0,coinCount=0,camera=0;
+let playing=false,finished=false,frame=0,raf=0;
+let startTime=0;
+
+function reset(){
+  player={x:70,y:500,w:27,h:34,vx:0,vy:0};
+  platforms=[
+    {x:25,y:550,w:110,h:18},
+    {x:190,y:465,w:100,h:18},
+    {x:45,y:375,w:95,h:18},
+    {x:260,y:300,w:100,h:18},
+    {x:115,y:215,w:100,h:18},
+    {x:300,y:135,w:110,h:18},
+    {x:165,y:55,w:100,h:18},
+    {x:25,y:-35,w:105,h:18},
+    {x:270,y:-120,w:100,h:18},
+    {x:145,y:-205,w:105,h:18}
+  ];
+  coins=[
+    {x:235,y:425,taken:false},
+    {x:90,y:335,taken:false},
+    {x:310,y:260,taken:false},
+    {x:165,y:175,taken:false},
+    {x:355,y:95,taken:false},
+    {x:210,y:15,taken:false},
+    {x:75,y:-75,taken:false},
+    {x:320,y:-160,taken:false}
+  ];
+  score=0;coinCount=0;camera=0;frame=0;
+  player.vy=-8.5;
+  $("score").textContent=0;
+  $("coins").textContent=0;
+}
+
+function cloud(x,y,s=1){
+  ctx.fillStyle="rgba(255,255,255,.8)";
+  ctx.beginPath();
+  ctx.arc(x,y,13*s,0,Math.PI*2);
+  ctx.arc(x+16*s,y-8*s,17*s,0,Math.PI*2);
+  ctx.arc(x+34*s,y,12*s,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawPlatform(p){
+  const y=p.y+camera;
+  if(y<-30||y>H+30)return;
+  ctx.fillStyle="#7046a2";
+  ctx.fillRect(p.x+6,y+9,p.w-12,15);
+  ctx.fillStyle="#b96e52";
+  ctx.fillRect(p.x+10,y+14,p.w-20,9);
+  ctx.fillStyle="#31e58a";
+  ctx.fillRect(p.x,y,p.w,12);
+  ctx.fillStyle="#9aff87";
+  for(let x=p.x+5;x<p.x+p.w-4;x+=16)ctx.fillRect(x,y-3,8,4);
+}
+
+function drawPlayer(){
+  const x=player.x,y=player.y+camera;
+  ctx.fillStyle="#20234a";
+  ctx.fillRect(x+3,y+8,player.w-6,player.h-8);
+  ctx.fillStyle="#fff";
+  ctx.fillRect(x+5,y+10,player.w-10,player.h-13);
+  ctx.fillStyle="#ff426b";
+  ctx.fillRect(x+2,y+2,player.w-3,9);
+  ctx.fillStyle="#ffdb5c";
+  ctx.fillRect(x+17,y+7,7,4);
+  ctx.fillStyle="#20234a";
+  ctx.fillRect(x+9,y+17,4,5);
+  ctx.fillRect(x+19,y+17,4,5);
+  ctx.fillRect(x+7,y+player.h-5,6,6);
+  ctx.fillRect(x+18,y+player.h-5,6,6);
+}
+
+function draw(){
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,"#168cff");
+  sky.addColorStop(1,"#a6edff");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+
+  for(let i=0;i<7;i++){
+    let y=((i*115+frame*.25)%700)-60;
+    cloud((i*83+20)%W,y,.7+(i%3)*.18);
+  }
+
+  platforms.forEach(drawPlatform);
+
+  coins.forEach(c=>{
+    if(c.taken)return;
+    let y=c.y+camera;
+    if(y<-30||y>H+30)return;
+    ctx.fillStyle="#e88900";
+    ctx.beginPath();ctx.ellipse(c.x,y,11,15,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#ffe83f";
+    ctx.beginPath();ctx.ellipse(c.x,y,7,11,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fff4a0";
+    ctx.fillRect(c.x-2,y-7,3,10);
+  });
+
+  // Finish flag near the upper end of the course
+  const flagY=-255+camera;
+  ctx.fillStyle="#49335f";
+  ctx.fillRect(355,flagY,5,58);
+  ctx.fillStyle="#ff405e";
+  ctx.beginPath();
+  ctx.moveTo(360,flagY+4);ctx.lineTo(400,flagY+17);
+  ctx.lineTo(360,flagY+31);ctx.fill();
+
+  drawPlayer();
+
+  if(!playing){
+    ctx.fillStyle="rgba(5,10,32,.65)";
+    ctx.fillRect(0,0,W,H);
+    ctx.textAlign="center";
+    ctx.fillStyle="#fff";
+    ctx.font="bold 30px Arial";
+    ctx.fillText(finished?"COURSE COMPLETE!":"SKY HOPPER",W/2,H/2-12);
+    ctx.font="16px Arial";
+    ctx.fillStyle="#00e5ff";
+    ctx.fillText(finished?"You reached the flag!":"Jump between the platforms",W/2,H/2+20);
+  }
+}
+
+function update(){
+  if(!playing)return;
+  frame++;
+
+  const left=keys.ArrowLeft||keys.a||keys.A;
+  const right=keys.ArrowRight||keys.d||keys.D;
+  if(left)player.vx-=.45;
+  if(right)player.vx+=.45;
+  player.vx*=.88;
+  player.vx=Math.max(-4.5,Math.min(4.5,player.vx));
+  player.x+=player.vx;
+  player.x=Math.max(0,Math.min(W-player.w,player.x));
+
+  const oldBottom=player.y+player.h;
+  player.vy+=.32;
+  player.vy=Math.min(player.vy,9);
+  player.y+=player.vy;
+
+  if(player.vy>0){
+    for(const p of platforms){
+      if(oldBottom<=p.y+camera+5 &&
+         player.y+player.h>=p.y+camera &&
+         player.x+player.w>p.x && player.x<p.x+p.w){
+        player.y=p.y+camera-player.h;
+        player.vy=-9;
+        break;
+      }
+    }
+  }
+
+  // Scroll upward as the player climbs
+  if(player.y+camera< H*.38){
+    const shift=H*.38-(player.y+camera);
+    camera+=shift;
+    score+=Math.floor(shift);
+    platforms.forEach(p=>p.y+=shift);
+    coins.forEach(c=>c.y+=shift);
+  }
+
+  // Pick up coins
+  for(const c of coins){
+    if(!c.taken && Math.abs((player.x+player.w/2)-c.x)<23 &&
+       Math.abs((player.y+camera+player.h/2)-c.y)<25){
+      c.taken=true;coinCount++;score+=50;
+      $("coins").textContent=coinCount;
+    }
+  }
+
+  $("score").textContent=score;
+
+  if(player.y+camera>H+25){
+    endGame(false);
+    return;
+  }
+
+  if(player.y+camera<-230){
+    endGame(true);
+    return;
+  }
+
+  draw();
+  raf=requestAnimationFrame(update);
+}
+
+function endGame(won){
+  playing=false;
+  finished=won;
+  cancelAnimationFrame(raf);
+  if(score>best){
+    best=score;
+    $("best").textContent=best;
+    try{localStorage.setItem("mbaSkyHopperBest",String(best))}catch(e){}
+  }
+  $("message").textContent=won?
+    "Amazing! You reached the sky flag!":
+    "You fell! Try again and climb higher.";
+  $("start").textContent="PLAY AGAIN";
+  draw();
+}
+
+function start(){
+  cancelAnimationFrame(raf);
+  playing=false;
+  reset();
+  player.y=500;
+  player.vy=-8.5;
+  playing=true;finished=false;
+  $("message").textContent="Keep hopping and collect the coins!";
+  $("start").textContent="RESTART";
+  draw();
+  raf=requestAnimationFrame(update);
+}
+
+document.addEventListener("keydown",e=>{
+  if(["ArrowLeft","ArrowRight","ArrowUp"," "].includes(e.key))e.preventDefault();
+  keys[e.key]=true;
+  if((e.key==="ArrowUp"||e.key==="w"||e.key==="W"||e.key===" ")&&!playing){
+    start();
+  }
+});
+document.addEventListener("keyup",e=>keys[e.key]=false);
+
+function bindHold(id,key){
+  const b=$(id);
+  const down=e=>{e.preventDefault();keys[key]=true};
+  const up=e=>{e.preventDefault();keys[key]=false};
+  b.addEventListener("pointerdown",down);
+  b.addEventListener("pointerup",up);
+  b.addEventListener("pointerleave",up);
+  b.addEventListener("pointercancel",up);
+}
+bindHold("left","ArrowLeft");
+bindHold("right","ArrowRight");
+$("jump").addEventListener("click",()=>{
+  if(!playing)start();
+  else if(player.vy>-2)player.vy=-9;
+});
+$("start").addEventListener("click",start);
+
+reset();
+playing=false;
+draw();
+})();
+</script>
+</body>
+</html>
+
