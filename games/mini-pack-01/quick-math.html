@@ -1,1 +1,203 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Math | MattBread Arcade</title>
+<style>
+:root{--bg:#090b16;--panel:#14182b;--blue:#00d9ff;--red:#ff3155;--text:#f5f7ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#172044,var(--bg) 65%);color:var(--text);font-family:Arial,sans-serif;display:grid;place-items:center;padding:20px}
+.game{width:min(100%,560px);background:var(--panel);border:1px solid #303858;border-radius:22px;padding:26px;box-shadow:0 0 35px #00d9ff15}
+.brand{color:var(--blue);font-size:12px;letter-spacing:3px;font-weight:bold}
+h1{margin:8px 0;font-size:clamp(32px,8vw,48px)}
+.sub{color:#aeb8d5;margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+.stat{background:#0c1020;padding:12px 6px;border-radius:12px;text-align:center}
+.stat small{display:block;color:#9aa6c8;margin-bottom:6px}
+.stat strong{font-size:22px}
+#timer{color:var(--red)}
+.progress{height:7px;background:#080b15;border-radius:9px;overflow:hidden;margin:-8px 0 20px}
+#bar{height:100%;width:100%;background:linear-gradient(90deg,var(--blue),#7867ff);transition:width .2s}
+.question{background:#0c1020;border-radius:16px;padding:25px 10px;text-align:center;margin-bottom:16px}
+#problem{font-size:clamp(38px,10vw,58px);font-weight:900;letter-spacing:2px}
+#feedback{min-height:22px;text-align:center;font-weight:bold;margin:12px 0;color:var(--blue)}
+.answers{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+button{font:inherit;font-weight:bold;cursor:pointer;border:1px solid #35405f;border-radius:12px;padding:16px;color:var(--text);background:#202743;transition:transform .1s,border-color .1s}
+button:hover:not(:disabled){border-color:var(--blue);transform:translateY(-2px)}
+button:disabled{cursor:default;opacity:.7}
+.primary{width:100%;margin-top:18px;background:linear-gradient(100deg,#00a9d7,#6556ff);border:0;color:white}
+#entry{width:100%;margin-top:12px;padding:14px;border:1px solid #35405f;border-radius:12px;background:#0c1020;color:white;font-size:20px;text-align:center}
+.hidden{display:none}
+.note{font-size:12px;color:#929dbb;text-align:center;margin:18px 0 0}
+</style>
+</head>
+<body>
+<main class="game">
+  <div class="brand">MATTBREAD ARCADE</div>
+  <h1>QUICK MATH</h1>
+  <p class="sub">Think fast. Build your streak. Beat your best.</p>
+
+  <section class="stats">
+    <div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+    <div class="stat"><small>TIME</small><strong id="timer">60</strong></div>
+    <div class="stat"><small>BEST</small><strong id="best">0</strong></div>
+  </section>
+
+  <div class="progress"><div id="bar"></div></div>
+
+  <section class="question">
+    <div id="roundLabel" style="color:#9aa6c8;margin-bottom:12px">READY?</div>
+    <div id="problem">Ready to play?</div>
+  </section>
+
+  <div id="feedback" aria-live="polite">Choose an answer to begin!</div>
+  <div class="answers" id="answers">
+    <button disabled>—</button><button disabled>—</button>
+    <button disabled>—</button><button disabled>—</button>
+  </div>
+
+  <form id="answerForm" class="hidden">
+    <input id="entry" type="number" inputmode="numeric" placeholder="Type your answer" autocomplete="off">
+    <button class="primary" type="submit">SUBMIT ANSWER</button>
+  </form>
+
+  <button class="primary" id="start">START GAME</button>
+  <p class="note">60-second challenge · Keyboard and mobile friendly</p>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let score = 0, time = 60, streak = 0, answer = 0;
+  let active = false, timerId = null, nextId = null;
+  let best = 0, mode = "choice";
+
+  try { best = Number(localStorage.getItem("mbaQuickMathBest")) || 0; } catch(e) {}
+  $("best").textContent = best;
+
+  function stopTimers() {
+    clearInterval(timerId);
+    clearTimeout(nextId);
+  }
+
+  function makeQuestion() {
+    if (!active) return;
+    mode = Math.random() < 0.25 ? "input" : "choice";
+    const level = Math.min( Math.floor(score / 50), 5 );
+    const operations = ["+", "-", "×"];
+    const op = operations[Math.floor(Math.random() * operations.length)];
+    let a, b;
+
+    if (op === "+") {
+      a = rand(2, 10 + level * 8);
+      b = rand(2, 10 + level * 8);
+      answer = a + b;
+    } else if (op === "-") {
+      a = rand(5, 15 + level * 10);
+      b = rand(1, a);
+      answer = a - b;
+    } else {
+      a = rand(2, 5 + level * 2);
+      b = rand(2, 10);
+      answer = a * b;
+    }
+
+    $("roundLabel").textContent = "STREAK: " + streak;
+    $("problem").textContent = `${a} ${op} ${b} = ?`;
+    $("feedback").textContent = mode === "input" ? "Type your answer below!" : "Pick the correct answer!";
+    $("answers").classList.toggle("hidden", mode === "input");
+    $("answerForm").classList.toggle("hidden", mode !== "input");
+
+    if (mode === "choice") {
+      let choices = new Set([answer]);
+      while (choices.size < 4) {
+        const offset = rand(-Math.max(8, level * 5 + 8), Math.max(8, level * 5 + 8));
+        choices.add(Math.max(0, answer + (offset || 1)));
+      }
+      const list = [...choices].sort(() => Math.random() - 0.5);
+      [...$("answers").children].forEach((button, i) => {
+        button.textContent = list[i];
+        button.disabled = false;
+        button.onclick = () => check(Number(button.textContent));
+      });
+    } else {
+      $("entry").value = "";
+      $("entry").focus();
+    }
+  }
+
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function check(value) {
+    if (!active) return;
+    if (value === answer) {
+      streak++;
+      score += 10 + Math.min(streak - 1, 10) * 2;
+      $("feedback").textContent = "CORRECT! +" + (10 + Math.min(streak - 1, 10) * 2);
+      $("feedback").style.color = "#00e6a8";
+    } else {
+      streak = 0;
+      $("feedback").textContent = "Not quite! The answer was " + answer;
+      $("feedback").style.color = "#ff5671";
+    }
+
+    $("score").textContent = score;
+    $("roundLabel").textContent = "STREAK: " + streak;
+    [...$("answers").children].forEach(button => button.disabled = true);
+    $("answerForm").classList.add("hidden");
+    $("answers").classList.add("hidden");
+    nextId = setTimeout(makeQuestion, 650);
+  }
+
+  $("answerForm").addEventListener("submit", event => {
+    event.preventDefault();
+    if ($("entry").value.trim() !== "") check(Number($("entry").value));
+  });
+
+  function endGame() {
+    active = false;
+    stopTimers();
+    $("timer").textContent = "0";
+    $("bar").style.width = "0%";
+    $("problem").textContent = "TIME'S UP!";
+    $("roundLabel").textContent = "FINAL SCORE";
+    $("feedback").style.color = "#00d9ff";
+    $("feedback").textContent = `You scored ${score} points!`;
+    $("answers").classList.add("hidden");
+    $("answerForm").classList.add("hidden");
+    $("start").textContent = "PLAY AGAIN";
+    $("start").classList.remove("hidden");
+
+    if (score > best) {
+      best = score;
+      $("best").textContent = best;
+      try { localStorage.setItem("mbaQuickMathBest", String(best)); } catch(e) {}
+      $("feedback").textContent += " NEW BEST!";
+    }
+  }
+
+  $("start").addEventListener("click", () => {
+    stopTimers();
+    score = 0; time = 60; streak = 0; active = true;
+    $("score").textContent = "0";
+    $("timer").textContent = time;
+    $("bar").style.width = "100%";
+    $("start").classList.add("hidden");
+    makeQuestion();
+
+    timerId = setInterval(() => {
+      time--;
+      $("timer").textContent = time;
+      $("bar").style.width = (time / 60 * 100) + "%";
+      if (time <= 0) endGame();
+    }, 1000);
+  });
+})();
+</script>
+</body>
+</html>
+
