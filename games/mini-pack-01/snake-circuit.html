@@ -1,1 +1,157 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snake Circuit | MattBread Arcade</title>
+<style>
+:root{color-scheme:dark;--cyan:#00f5ff;--pink:#ff2d75}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#152447,#070912 65%);color:#f5f7ff;font-family:Arial,sans-serif;text-align:center;padding:22px 12px}
+h1{margin:8px 0;color:var(--cyan);font-size:clamp(30px,6vw,48px);text-shadow:0 0 18px #00eaff88}
+p{color:#bdc8df}
+.game{max-width:560px;margin:auto}
+.stats{display:flex;justify-content:space-around;gap:10px;margin:18px 0}
+.stat{flex:1;padding:12px;background:#10182b;border:1px solid #263959;border-radius:12px}
+.stat small{display:block;color:#9fb0d1;margin-bottom:6px}
+.stat strong{font-size:24px;color:var(--cyan)}
+canvas{display:block;width:min(100%,500px);height:auto;margin:auto;background:#080d19;border:2px solid #00ddec;border-radius:12px;box-shadow:0 0 24px #00ddec30;touch-action:none}
+button{border:0;border-radius:10px;padding:12px 18px;margin:6px;background:var(--cyan);color:#051019;font-size:15px;font-weight:bold;cursor:pointer}
+button:hover{filter:brightness(1.15)}
+#message{min-height:24px;color:#ff8ab3;font-weight:bold;margin:12px}
+.controls{display:grid;grid-template-columns:repeat(3,58px);justify-content:center;gap:5px;margin:12px auto}
+.controls button{margin:0;padding:12px 0;font-size:22px}
+.controls .empty{visibility:hidden}
+.back{display:inline-block;margin-top:14px;color:var(--cyan);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="game">
+<h1>🐍 SNAKE CIRCUIT</h1>
+<p>Collect energy. Grow longer. Don't crash.</p>
+<div class="stats">
+<div class="stat"><small>SCORE</small><strong id="score">0</strong></div>
+<div class="stat"><small>BEST</small><strong id="best">0</strong></div>
+<div class="stat"><small>STATUS</small><strong id="status" style="font-size:17px">READY</strong></div>
+</div>
+<canvas id="board" width="500" height="500" aria-label="Snake Circuit game board"></canvas>
+<div id="message">Press an arrow key or tap a direction to start.</div>
+<button id="start">▶ Start / Restart</button>
+<div class="controls" aria-label="Touch controls">
+<span class="empty"></span><button data-dir="up" aria-label="Up">▲</button><span class="empty"></span>
+<button data-dir="left" aria-label="Left">◀</button><button data-dir="down" aria-label="Down">▼</button><button data-dir="right" aria-label="Right">▶</button>
+</div>
+<p>Keyboard: Arrow keys or WASD. Collect cyan energy orbs and avoid walls and yourself.</p>
+<a class="back" href="index.html">← Back to Mini Pack 01</a>
+</div>
+<script>
+(() => {
+const canvas=document.getElementById('board');
+const ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score');
+const bestEl=document.getElementById('best');
+const statusEl=document.getElementById('status');
+const message=document.getElementById('message');
+const startBtn=document.getElementById('start');
+const cells=25, tile=20;
+let snake, food, dx, dy, nextDx, nextDy, score, timer, running=false, ended=false;
+let best=0;
+try{best=Number(localStorage.getItem('snakeCircuitBest'))||0}catch(e){}
+bestEl.textContent=best;
+const directions={
+up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]
+};
+function placeFood(){
+const free=[];
+for(let y=0;y<cells;y++)for(let x=0;x<cells;x++){
+if(!snake.some(s=>s.x===x&&s.y===y))free.push({x,y});
+}
+if(!free.length){finish(true);return}
+food=free[Math.floor(Math.random()*free.length)];
+}
+function reset(){
+clearInterval(timer);
+snake=[{x:12,y:12},{x:11,y:12},{x:10,y:12}];
+dx=1;dy=0;nextDx=1;nextDy=0;score=0;running=true;ended=false;
+scoreEl.textContent='0';statusEl.textContent='GO!';
+message.textContent='Collect the energy orbs!';
+placeFood();draw();
+timer=setInterval(step,115);
+}
+function setDirection(name){
+const d=directions[name];if(!d)return;
+if(!running){if(ended)return;reset()}
+if(d[0]===-dx&&d[1]===-dy)return;
+nextDx=d[0];nextDy=d[1];
+}
+function step(){
+if(!running)return;
+dx=nextDx;dy=nextDy;
+const head={x:snake[0].x+dx,y:snake[0].y+dy};
+if(head.x<0||head.y<0||head.x>=cells||head.y>=cells){finish(false);return}
+const eating=head.x===food.x&&head.y===food.y;
+const body=eating?snake:snake.slice(0,-1);
+if(body.some(s=>s.x===head.x&&s.y===head.y)){finish(false);return}
+snake.unshift(head);
+if(eating){
+score+=10;scoreEl.textContent=score;
+if(score>best){best=score;bestEl.textContent=best;try{localStorage.setItem('snakeCircuitBest',String(best))}catch(e){}}
+placeFood();
+}else snake.pop();
+draw();
+}
+function finish(won){
+clearInterval(timer);running=false;ended=true;
+statusEl.textContent=won?'WIN':'CRASH';
+message.textContent=won?'Circuit cleared! You filled the board!':'Signal lost! Your score: '+score+'. Hit Restart to try again.';
+draw();
+}
+function draw(){
+ctx.clearRect(0,0,500,500);
+ctx.fillStyle='#080d19';ctx.fillRect(0,0,500,500);
+ctx.strokeStyle='#142039';ctx.lineWidth=1;
+for(let i=0;i<=cells;i++){ctx.beginPath();ctx.moveTo(i*tile,0);ctx.lineTo(i*tile,500);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*tile);ctx.lineTo(500,i*tile);ctx.stroke()}
+if(food){
+ctx.save();ctx.shadowColor='#00f5ff';ctx.shadowBlur=18;
+ctx.fillStyle='#00f5ff';ctx.beginPath();ctx.arc(food.x*tile+10,food.y*tile+10,7,0,Math.PI*2);ctx.fill();ctx.restore();
+ctx.fillStyle='#fff';ctx.fillRect(food.x*tile+8,food.y*tile+8,4,4);
+}
+snake.forEach((s,i)=>{
+ctx.save();ctx.shadowColor=i===0?'#ff2d75':'#00f5ff';ctx.shadowBlur=i===0?13:7;
+ctx.fillStyle=i===0?'#ff2d75':'#00cbd8';
+ctx.fillRect(s.x*tile+2,s.y*tile+2,tile-4,tile-4);ctx.restore();
+});
+if(!running){
+ctx.fillStyle='#020611bb';ctx.fillRect(55,210,390,80);
+ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 24px Arial';
+ctx.fillText(ended?'SIGNAL LOST':'READY TO PLAY',250,245);
+ctx.font='15px Arial';ctx.fillStyle='#00f5ff';
+ctx.fillText(ended?'Press Restart':'Press Start or a direction',250,270);
+}
+}
+startBtn.addEventListener('click',reset);
+document.addEventListener('keydown',e=>{
+const keys={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};
+const dir=keys[e.key];if(dir){e.preventDefault();setDirection(dir)}
+if(e.key===' '&&ended){e.preventDefault();reset()}
+});
+document.querySelectorAll('[data-dir]').forEach(btn=>{
+btn.addEventListener('click',()=>setDirection(btn.dataset.dir));
+});
+let touchStart=null;
+canvas.addEventListener('touchstart',e=>{
+const t=e.changedTouches[0];touchStart={x:t.clientX,y:t.clientY};
+},{passive:true});
+canvas.addEventListener('touchend',e=>{
+if(!touchStart)return;
+const t=e.changedTouches[0],x=t.clientX-touchStart.x,y=t.clientY-touchStart.y;
+if(Math.max(Math.abs(x),Math.abs(y))>18)setDirection(Math.abs(x)>Math.abs(y)?(x>0?'right':'left'):(y>0?'down':'up'));
+touchStart=null;
+},{passive:true});
+draw();
+})();
+</script>
+</body>
+</html>
+
