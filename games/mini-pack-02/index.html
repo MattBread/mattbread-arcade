@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MattBread Arcade | Mini Pack 02</title>
+  <style>
+    :root {
+      --bg: #080b14;
+      --panel: #12182a;
+      --red: #ff3158;
+      --blue: #4ca7ff;
+      --text: #f5f7ff;
+      --muted: #a9b3d0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      color: var(--text);
+      background: radial-gradient(circle at top, #192544, var(--bg) 60%);
+      font-family: system-ui, Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      max-width: 1000px;
+      margin: 0 auto 28px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      margin: 8px 0;
+    }
+
+    h1 span { color: var(--red); }
+
+    header p { color: var(--muted); }
+
+    .back {
+      display: inline-block;
+      color: var(--blue);
+      text-decoration: none;
+      margin-bottom: 12px;
+    }
+
+    .games {
+      max-width: 1000px;
+      margin: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+    }
+
+    .game {
+      padding: 20px;
+      min-height: 170px;
+      border: 1px solid #293653;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #171f35, var(--panel));
+      transition: transform .2s, border-color .2s;
+    }
+
+    .game:hover {
+      transform: translateY(-4px);
+      border-color: var(--blue);
+    }
+
+    .game .number {
+      color: var(--red);
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .game h2 { margin: 10px 0 6px; font-size: 1.2rem; }
+    .game p { color: var(--muted); font-size: .9rem; min-height: 42px; }
+
+    .play {
+      display: inline-block;
+      padding: 9px 14px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #07101e;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .play:hover { background: #80c2ff; }
+
+    footer {
+      max-width: 1000px;
+      margin: 36px auto 0;
+      padding-top: 20px;
+      border-top: 1px solid #293653;
+      text-align: center;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back" href="../../index.html">← Back to MattBread Arcade</a>
+    <h1><span>MattBread</span> Arcade</h1>
+    <p>MINI-GAME PACK 02 · GAMES 11–20</p>
+    <p>Ten new arcade adventures by Mxtt704.</p>
+  </header>
+
+  <main class="games">
+    <article class="game">
+      <div class="number">GAME 11</div>
+      <h2>Dungeon Escape</h2>
+      <p>Explore a dungeon, collect treasure, and find the exit.</p>
+      <a class="play" href="dungeon-escape.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 12</div>
+      <h2>Star Blaster</h2>
+      <p>Blast enemy ships and survive waves of attackers.</p>
+      <a class="play" href="star-blaster.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 13</div>
+      <h2>Pixel Jumper</h2>
+      <p>Jump between platforms and collect coins.</p>
+      <a class="play" href="pixel-jumper.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 14</div>
+      <h2>Neon Pinball</h2>
+      <p>Keep the ball in play and chase a high score.</p>
+      <a class="play" href="neon-pinball.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 15</div>
+      <h2>Turbo Traffic</h2>
+      <p>Dodge traffic and see how long you can survive.</p>
+      <a class="play" href="turbo-traffic.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 16</div>
+      <h2>Block Drop</h2>
+      <p>Arrange falling blocks and clear complete lines.</p>
+      <a class="play" href="block-drop.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 17</div>
+      <h2>Deep Sea Dive</h2>
+      <p>Collect underwater treasure and avoid hazards.</p>
+      <a class="play" href="deep-sea-dive.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 18</div>
+      <h2>Bubble Burst</h2>
+      <p>Pop matching bubbles to clear the board.</p>
+      <a class="play" href="bubble-burst.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 19</div>
+      <h2>Ninja Dash</h2>
+      <p>Run, jump, and avoid dangerous traps.</p>
+      <a class="play" href="ninja-dash.html">Play Game</a>
+    </article>
+
+    <article class="game">
+      <div class="number">GAME 20</div>
+      <h2>Whack-a-Bot</h2>
+      <p>Hit the popping robots before time runs out.</p>
+      <a class="play" href="whack-a-bot.html">Play Game</a>
+    </article>
+  </main>
+
+  <footer>
+    MattBread Arcade · Developer: Mxtt704<br>
+    Pack 02 · Original mini-games
+  </footer>
+</body>
+</html>
