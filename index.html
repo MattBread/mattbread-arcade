@@ -279,18 +279,15 @@ document.getElementById('letter-state').innerHTML=`<strong>Games beginning with 
 }));
 
 document.querySelectorAll('[data-genre]').forEach(b=>b.addEventListener('click',()=>{
-showView('library');
-const s=document.getElementById('library-search');
-s.value=b.dataset.genre;
-document.getElementById('library-state').innerHTML=`<strong>Genre selected: ${b.dataset.genre.replace(/\b\w/g,c=>c.toUpperCase())}</strong><p>The library is ready for games in this genre. We’ll connect the real game list in the next step.</p>`;
+  showView('library');
+  const s=document.getElementById('library-search');
+  s.value=b.dataset.genre;
+  renderGames();
 }));
 
-document.getElementById('library-search').addEventListener('input',e=>{
-const term=e.target.value.trim();
-document.getElementById('library-state').innerHTML=term
-?`<strong>Searching for “${term.replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}”</strong><p>The search bar is wired up. Once we connect the game list, it will filter real games.</p>`
-:`<strong>🎮 Your library starts here.</strong><p>This homepage layout is ready. The next step is connecting your existing games to the library without changing their game files.</p>`;
-});
+
+document.getElementById('library-search').addEventListener('input', renderGames);
+renderGames();  
 </script>
 </body>
 </html>
