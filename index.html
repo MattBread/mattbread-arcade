@@ -294,43 +294,43 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
 
     <!-- Cards are written directly in the HTML so they don't depend on JavaScript to appear. -->
     <div class="game-grid" id="library-games">
-      <article class="game-card" data-title="paddle blitz arcade">
+      <article class="game-card" data-title="paddle blitz arcade" data-genre="sports arcade">
         <span class="game-icon">🏓</span><h3>Paddle Blitz</h3><span class="game-status">Arcade</span>
         <p>Fast paddle action. Keep the rally alive.</p><a class="play-link" href="games/mini-pack-01/paddle-blitz.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="snake circuit arcade">
+      <article class="game-card" data-title="snake circuit arcade" data-genre="action arcade">
         <span class="game-icon">🐍</span><h3>Snake Circuit</h3><span class="game-status">Arcade</span>
         <p>Collect, grow, and avoid your own tail.</p><a class="play-link" href="games/mini-pack-01/snake-circuit.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="meteor tap casual">
+      <article class="game-card" data-title="meteor tap casual" data-genre="action arcade">
         <span class="game-icon">☄️</span><h3>Meteor Tap</h3><span class="game-status">Casual</span>
         <p>React quickly as meteors streak across the screen.</p><a class="play-link" href="games/mini-pack-01/meteor-tap.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="sky hopper platformer">
+      <article class="game-card" data-title="sky hopper platformer" data-genre="arcade platformer">
         <span class="game-icon">🪂</span><h3>Sky Hopper</h3><span class="game-status">Platformer</span>
         <p>Jump your way through a sky-high challenge.</p><a class="play-link" href="games/mini-pack-01/sky-hopper.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="target pop arcade">
+      <article class="game-card" data-title="target pop arcade" data-genre="action arcade">
         <span class="game-icon">🎯</span><h3>Target Pop</h3><span class="game-status">Arcade</span>
         <p>Test your aim and hit the targets.</p><a class="play-link" href="games/mini-pack-01/target-pop.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="memory matrix puzzle">
+      <article class="game-card" data-title="memory matrix puzzle" data-genre="puzzle">
         <span class="game-icon">🧠</span><h3>Memory Matrix</h3><span class="game-status">Puzzle</span>
         <p>Flip cards and challenge your memory.</p><a class="play-link" href="games/mini-pack-01/memory-matrix.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="brick breaker arcade">
+      <article class="game-card" data-title="brick breaker arcade" data-genre="action arcade">
         <span class="game-icon">🧱</span><h3>Brick Breaker</h3><span class="game-status">Arcade</span>
         <p>Break every brick and keep the ball in play.</p><a class="play-link" href="games/mini-pack-01/brick-breaker.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="lane racer racing">
+      <article class="game-card" data-title="lane racer racing" data-genre="racing">
         <span class="game-icon">🏎️</span><h3>Lane Racer</h3><span class="game-status">Racing</span>
         <p>Dodge traffic and push for a new record.</p><a class="play-link" href="games/mini-pack-01/lane-racer.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="quick math puzzle">
+      <article class="game-card" data-title="quick math puzzle" data-genre="puzzle">
         <span class="game-icon">🔢</span><h3>Quick Math</h3><span class="game-status">Puzzle</span>
         <p>Race the clock and solve the equations.</p><a class="play-link" href="games/mini-pack-01/quick-math.html">PLAY GAME ↗</a>
       </article>
-      <article class="game-card" data-title="gemstone quest adventure">
+      <article class="game-card" data-title="gemstone quest adventure" data-genre="adventure puzzle">
         <span class="game-icon">💎</span><h3>Gemstone Quest</h3><span class="game-status">Adventure</span>
         <p>Set out on a quest to discover precious gems.</p><a class="play-link" href="games/mini-pack-01/gemstone-quest.html">PLAY GAME ↗</a>
       </article>
@@ -397,7 +397,7 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
     let visible = 0;
 
     cards.forEach(card => {
-      const matches = card.dataset.title.includes(term);
+      const matches = card.dataset.title.includes(term) || (card.dataset.genre || "").includes(term);
       card.hidden = !matches;
       if (matches) visible++;
     });
