@@ -1,293 +1,480 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080b0a">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
 <title>MattBread Arcade</title>
 <style>
-:root{--bg:#080b0a;--panel:#111713;--green:#ff304f;--red:#168cff;--text:#f4f7f2;--muted:#a1aca3;--line:rgba(22,140,255,.22)}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(22,140,255,.09),transparent 34rem),radial-gradient(ellipse at 94% 14%,rgba(22,140,255,.08),transparent 30rem),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
-button,input{font:inherit}
-button{cursor:pointer}
-.shell{width:min(1160px,calc(100% - 36px));margin:auto}
-.topbar{position:sticky;top:0;z-index:5;background:rgba(8,11,10,.92);backdrop-filter:blur(16px);border-bottom:1px solid #ffffff12}
-.topbar-inner{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 0}
-.brand{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:max-content}
-.brand-mark{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--green);border-radius:12px;color:var(--green);font-size:23px;font-weight:950;text-shadow:0 0 15px #ff304fa6;box-shadow:0 0 20px #ff304f1f}
-.brand-name{font-size:19px;font-weight:950;letter-spacing:-.6px}
-.brand-name span,.footer-brand span{color:var(--green)}
-.nav{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
-.nav-btn{color:var(--muted);background:transparent;border:1px solid transparent;padding:10px 13px;border-radius:10px;font-size:13px;font-weight:750}
-.nav-btn:hover{color:var(--text);background:#ffffff0a}
-.nav-btn.active{color:var(--green);border-color:var(--line);background:#ff304f12}
-.hero{padding:74px 0 48px}
-.eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
-.eyebrow:before{content:"";width:22px;height:2px;background:var(--red);box-shadow:0 0 10px var(--red)}
-h1{margin:18px 0 16px;max-width:800px;font-size:clamp(42px,7vw,78px);line-height:.98;letter-spacing:-4px}
-h1 .green{color:var(--green);text-shadow:0 0 28px #ff304f26}
-h1 .red{color:var(--red)}
-.hero-copy{color:var(--muted);font-size:16px;line-height:1.7;max-width:580px;margin:0}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.btn{border-radius:11px;padding:13px 18px;font-weight:850;font-size:13px;border:1px solid transparent;transition:.18s}
-.btn:hover{transform:translateY(-2px)}
-.btn-primary{background:var(--green);color:#10150b;box-shadow:0 0 24px #ff304f24}
-.btn-secondary{background:#168cff12;border-color:#168cff59;color:#65b5ff}
-.hero-rule{height:1px;margin-top:50px;background:linear-gradient(90deg,var(--green),#ff304f0d 48%,#168cff4d,transparent)}
-main{min-height:420px;padding-bottom:64px}
-.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin:10px 0 22px}
-.section-kicker{color:var(--red);font-size:10px;font-weight:950;letter-spacing:2px;text-transform:uppercase}
-h2{margin:7px 0 0;font-size:clamp(25px,4vw,35px);letter-spacing:-1.1px}
-.section-copy{color:var(--muted);font-size:13px;line-height:1.6;max-width:470px;margin:10px 0 0}
-.search{width:min(290px,100%);background:#0e1310;border:1px solid #ffffff1f;border-radius:11px;color:var(--text);outline:none;padding:12px 14px}
-.search:focus{border-color:var(--green);box-shadow:0 0 0 3px #ff304f14}
-.quick-links{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:26px 0 42px}
-  .game-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-top:20px}
-.game-card{padding:20px;border:1px solid #ffffff18;border-radius:14px;background:linear-gradient(145deg,#151d18,#0c100d);display:flex;flex-direction:column;gap:10px}
-.game-card:hover{border-color:var(--green);transform:translateY(-2px)}
-.game-card .game-icon{font-size:30px}
-.game-card h3{margin:0;font-size:17px}
-.game-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.6;flex:1}
-.game-card a{display:inline-block;text-decoration:none;text-align:center;padding:10px;border-radius:9px;background:var(--green);color:#10150b;font-size:12px;font-weight:900}
-.game-status{font-size:10px;color:#65b5ff;text-transform:uppercase;letter-spacing:1px;font-weight:800}
-@media(max-width:780px){.game-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:460px){.game-grid{grid-template-columns:1fr}}
-.quick-link{text-align:left;padding:18px;min-height:112px;border-radius:14px;color:var(--text);background:linear-gradient(145deg,#151d18f2,#0c100df2);border:1px solid #ffffff14;transition:.2s}
-.quick-link:hover{border-color:var(--green);transform:translateY(-3px)}
-.quick-icon{font-size:22px;display:block;margin-bottom:15px}
-.quick-title{font-weight:900;font-size:14px;display:block}
-.quick-sub{color:var(--muted);font-size:11px;display:block;margin-top:5px}
-.genre-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.genre{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;border-radius:11px;border:1px solid #ffffff14;background:#101613cc;color:var(--text);text-align:left}
-.genre:hover{border-color:#ff304f80;background:#ff304f0b}
-.genre-name{font-size:13px;font-weight:800}
-.genre-count{color:var(--muted);font-size:10px}
-.letter-bar{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0}
-.letter{min-width:35px;padding:9px 0;border-radius:8px;border:1px solid #ffffff1a;color:var(--muted);background:#0e1310;font-weight:800;font-size:12px}
-.letter:hover,.letter.selected{color:#10150b;background:var(--green);border-color:var(--green)}
-.empty-state{border:1px dashed #ff304f3d;border-radius:15px;padding:30px;background:#ff304f06;text-align:center;margin-top:20px}
-.empty-state strong{display:block;font-size:16px;margin-bottom:8px}
-.empty-state p{color:var(--muted);font-size:13px;margin:0;line-height:1.6}
-.view{display:none;animation:fade .2s ease}
-.view.active{display:block}
-@keyframes fade{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-footer{border-top:1px solid #ffffff14;background:#050706b3}
-.footer-inner{padding:28px 0 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.footer-brand{font-size:15px;font-weight:950}
-.credits{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px}
-.credits b{color:var(--text)}
-.copyright{width:100%;color:#657067;font-size:10px;margin-top:2px}
-@media(max-width:780px){
-.topbar-inner{align-items:flex-start;flex-direction:column;gap:12px}
-.nav{justify-content:flex-start;width:100%}
-.nav-btn{padding:9px 10px}
-.hero{padding-top:52px}
-h1{letter-spacing:-2px}
-.quick-links{grid-template-columns:repeat(2,1fr)}
-.genre-list{grid-template-columns:repeat(2,1fr)}
-.section-head{align-items:flex-start;flex-direction:column}
+:root {
+  --bg:#080b14;
+  --panel:#101625;
+  --panel2:#151e30;
+  --text:#f4f7ff;
+  --muted:#9ba8bd;
+  --red:#ff416c;
+  --blue:#38bdf8;
+  --green:#4ade80;
+  --border:rgba(255,255,255,.10);
 }
-@media(max-width:460px){
-.shell{width:calc(100% - 24px)}
-.genre-list{grid-template-columns:1fr}
-.credits{gap:10px 15px}
-.quick-link{padding:14px}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(ellipse at 10% 0%,rgba(56,189,248,.12),transparent 35%),
+    radial-gradient(ellipse at 90% 10%,rgba(255,65,108,.10),transparent 35%),
+    var(--bg);
+  font-family:Arial,Helvetica,sans-serif;
+  min-height:100vh;
+}
+a { color:inherit; text-decoration:none; }
+button,input { font:inherit; }
+button { cursor:pointer; }
+.shell { width:min(1150px,92%); margin:auto; }
+header {
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:rgba(8,11,20,.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.nav {
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+  padding:14px 0;
+}
+.brand { font-size:23px; font-weight:900; letter-spacing:-1px; }
+.brand span,.footer-brand span { color:var(--red); }
+.nav-links { display:flex; gap:8px; flex-wrap:wrap; }
+.nav-btn {
+  background:transparent;
+  color:var(--muted);
+  border:1px solid transparent;
+  padding:10px 13px;
+  border-radius:10px;
+  font-weight:700;
+}
+.nav-btn:hover,.nav-btn.active {
+  color:white;
+  background:var(--panel2);
+  border-color:var(--border);
+}
+main { padding:34px 0 65px; }
+.view { display:none; }
+.view.active { display:block; }
+.hero {
+  padding:45px 0 35px;
+  display:grid;
+  grid-template-columns:1.4fr .8fr;
+  gap:30px;
+  align-items:center;
+}
+.kicker,.section-kicker {
+  color:var(--blue);
+  text-transform:uppercase;
+  letter-spacing:2px;
+  font-size:12px;
+  font-weight:900;
+}
+h1 {
+  margin:15px 0;
+  font-size:clamp(38px,7vw,70px);
+  line-height:1.02;
+  letter-spacing:-2.5px;
+}
+h1 span {
+  color:var(--red);
+  text-shadow:0 0 30px rgba(255,65,108,.24);
+}
+.hero p,.section-copy { color:var(--muted); line-height:1.7; }
+.hero-panel {
+  background:linear-gradient(145deg,rgba(56,189,248,.12),rgba(255,65,108,.10));
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:30px;
+  text-align:center;
+}
+.hero-art { font-size:76px; filter:drop-shadow(0 0 22px rgba(56,189,248,.25)); }
+.hero-panel h2 { margin:12px 0 8px; }
+.btn {
+  display:inline-block;
+  border:0;
+  border-radius:10px;
+  padding:13px 18px;
+  font-weight:900;
+  margin:8px 8px 0 0;
+}
+.btn-primary { color:#fff; background:linear-gradient(100deg,#ff416c,#e62952); }
+.btn-secondary { color:var(--text); background:var(--panel2); border:1px solid var(--border); }
+.section-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:20px;
+  flex-wrap:wrap;
+  margin:35px 0 20px;
+}
+h2 { font-size:30px; margin:8px 0; letter-spacing:-.7px; }
+.search {
+  color:white;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  width:min(100%,320px);
+  outline:none;
+}
+.search:focus { border-color:var(--blue); }
+.game-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:17px;
+}
+.game-card {
+  min-width:0;
+  background:linear-gradient(150deg,var(--panel2),var(--panel));
+  border:1px solid var(--border);
+  border-radius:17px;
+  padding:22px;
+  transition:transform .18s,border-color .18s;
+}
+.game-card:hover {
+  transform:translateY(-4px);
+  border-color:rgba(56,189,248,.55);
+}
+.game-icon {
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  background:rgba(56,189,248,.10);
+  border:1px solid var(--border);
+  border-radius:15px;
+  font-size:32px;
+}
+.game-card h3 { font-size:20px; margin:17px 0 9px; }
+.game-status {
+  display:inline-block;
+  color:var(--blue);
+  font-size:12px;
+  font-weight:900;
+  background:rgba(56,189,248,.10);
+  border-radius:20px;
+  padding:6px 10px;
+}
+.game-card p { color:var(--muted); line-height:1.5; min-height:42px; }
+.play-link {
+  display:inline-block;
+  color:white;
+  background:linear-gradient(100deg,#ff416c,#e62952);
+  border-radius:9px;
+  padding:11px 13px;
+  font-size:12px;
+  font-weight:900;
+  margin-top:7px;
+}
+.play-link:hover,.btn:hover { filter:brightness(1.12); }
+.quick-grid,.genre-list {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.quick-link,.genre {
+  text-align:left;
+  color:white;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+}
+.quick-link:hover,.genre:hover { border-color:var(--blue); }
+.quick-icon { display:block; font-size:25px; margin-bottom:10px; }
+.quick-title,.genre-name { display:block; font-weight:900; }
+.quick-sub,.genre-count { display:block; color:var(--muted); font-size:13px; margin-top:7px; }
+.letter-bar { display:flex; gap:7px; flex-wrap:wrap; margin:24px 0; }
+.letter {
+  color:white;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 12px;
+}
+.letter:hover,.letter.selected { background:var(--red); }
+.empty-state {
+  color:var(--muted);
+  border:1px dashed var(--border);
+  border-radius:14px;
+  padding:25px;
+  text-align:center;
+}
+.empty-state strong { color:white; }
+footer { border-top:1px solid var(--border); padding:30px 0; }
+.footer-inner { display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+.footer-brand { font-weight:900; font-size:20px; }
+.credits { display:flex; flex-wrap:wrap; gap:15px; color:var(--muted); font-size:13px; }
+.credits b { color:white; }
+.copyright { color:var(--muted); font-size:12px; }
+@media(max-width:760px) {
+  .hero { grid-template-columns:1fr; padding-top:25px; }
+  .game-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .quick-grid,.genre-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .nav { align-items:flex-start; }
+}
+@media(max-width:480px) {
+  .game-grid,.quick-grid,.genre-list { grid-template-columns:1fr; }
+  .nav-links { width:100%; }
+  .nav-btn { padding:9px; }
+  .game-card p { min-height:0; }
 }
 </style>
 </head>
 <body>
-<header class="topbar">
-<div class="shell topbar-inner">
-<a class="brand" href="#" aria-label="MattBread Arcade home">
-<span class="brand-mark">M</span>
-<span class="brand-name">MattBread <span>Arcade</span></span>
-</a>
-<nav class="nav" aria-label="Main navigation">
-<button class="nav-btn active" data-view="home">Home</button>
-<button class="nav-btn" data-view="library">Library</button>
-<button class="nav-btn" data-view="az">Categories A–Z</button>
-<button class="nav-btn" data-view="genres">Genres</button>
-</nav>
-</div>
+<header>
+  <div class="shell nav">
+    <a class="brand" href="#" data-view="home">MattBread <span>Arcade</span></a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <button class="nav-btn active" data-view="home">Home</button>
+      <button class="nav-btn" data-view="library">Library</button>
+      <button class="nav-btn" data-view="az">Categories A–Z</button>
+      <button class="nav-btn" data-view="genres">Genres</button>
+    </nav>
+  </div>
 </header>
 
-<div class="shell">
-<section class="hero">
-<div class="eyebrow">Your next game starts here</div>
-<h1>PLAY MORE.<br><span class="green">LEVEL UP.</span><br><span class="red">REPEAT.</span></h1>
-<p class="hero-copy">Welcome to MattBread Arcade — a growing collection of games to jump into, explore, and master. Pick a category, find your vibe, and get playing.</p>
-<div class="hero-actions">
-<button class="btn btn-primary" data-go="library">EXPLORE THE LIBRARY ↗</button>
-<button class="btn btn-secondary" data-go="genres">BROWSE GENRES</button>
-</div>
-<div class="hero-rule"></div>
-</section>
+<main class="shell">
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div>
+        <div class="kicker">Your next game starts here</div>
+        <h1>WELCOME TO<br> MATTBREAD <span>ARCADE</span></h1>
+        <p>A growing collection of browser games. Pick a game, jump in, and chase your next high score.</p>
+        <button class="btn btn-primary" data-view="library">EXPLORE THE LIBRARY ↗</button>
+        <button class="btn btn-secondary" data-view="genres">BROWSE GENRES</button>
+      </div>
+      <div class="hero-panel">
+        <div class="hero-art">🎮</div>
+        <h2>Ready Player One?</h2>
+        <p>Arcade action, puzzles, racing, and more.</p>
+      </div>
+    </div>
 
-<main>
-<section class="view active" id="view-home">
-<div class="section-head">
-<div>
-<div class="section-kicker">Start exploring</div>
-<h2>Find your kind of fun.</h2>
-<p class="section-copy">A clean home base for the whole arcade. The library and categories are ready to grow as games are added.</p>
-</div>
-</div>
-<div class="quick-links">
-<button class="quick-link" data-go="library"><span class="quick-icon">▦</span><span class="quick-title">Game Library</span><span class="quick-sub">Browse the collection</span></button>
-<button class="quick-link" data-go="az"><span class="quick-icon" style="color:var(--green)">A–Z</span><span class="quick-title">Categories A–Z</span><span class="quick-sub">Find games alphabetically</span></button>
-<button class="quick-link" data-go="genres"><span class="quick-icon" style="color:var(--red)">✳</span><span class="quick-title">Genres</span><span class="quick-sub">Pick your play style</span></button>
-<button class="quick-link" data-go="library"><span class="quick-icon">⌁</span><span class="quick-title">Made to Play</span><span class="quick-sub">Built for quick fun</span></button>
-</div>
-<div class="section-head">
-<div><div class="section-kicker">Choose a lane</div><h2>Browse by genre</h2></div>
-<button class="btn btn-secondary" data-go="genres">ALL GENRES ↗</button>
-</div>
-<div class="genre-list" id="home-genres"></div>
-</section>
+    <div class="section-head">
+      <div><div class="section-kicker">Quick access</div><h2>Jump right in</h2></div>
+    </div>
+    <div class="quick-grid">
+      <button class="quick-link" data-view="library"><span class="quick-icon">🕹️</span><span class="quick-title">Game Library</span><span class="quick-sub">Browse all available games</span></button>
+      <button class="quick-link" data-view="az"><span class="quick-icon">🔤</span><span class="quick-title">Categories A–Z</span><span class="quick-sub">Browse alphabetically</span></button>
+      <button class="quick-link" data-view="genres"><span class="quick-icon">✳️</span><span class="quick-title">Genres</span><span class="quick-sub">Find your play style</span></button>
+    </div>
 
-<section class="view" id="view-library">
-<div class="section-head">
-<div>
-<div class="section-kicker">The collection</div>
-<h2>Game Library</h2>
-<p class="section-copy">One place for every game in MattBread Arcade. Search and organize the collection as it grows.</p>
-</div>
-<input class="search" id="library-search" type="search" placeholder="Search games or genres…" aria-label="Search games or genres">
-</div>
-<div class="game-grid" id="library-games"></div>
-</section>
+    <div class="section-head">
+      <div><div class="section-kicker">Choose a lane</div><h2>Browse by genre</h2></div>
+      <button class="btn btn-secondary" data-view="genres">ALL GENRES ↗</button>
+    </div>
+    <div class="genre-list" id="home-genres"></div>
+  </section>
 
-<section class="view" id="view-az">
-<div class="section-head">
-<div>
-<div class="section-kicker">Browse alphabetically</div>
-<h2>Categories A–Z</h2>
-<p class="section-copy">Choose a letter to narrow the library. Game titles will appear here when the game list is connected.</p>
-</div>
-</div>
-<div class="letter-bar" id="letter-bar"></div>
-<div class="empty-state" id="letter-state">
-<strong>Browse from A to Z.</strong>
-<p>Select a letter to explore game titles starting with it.</p>
-</div>
-</section>
+  <section class="view" id="view-library">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">The collection</div>
+        <h2>Game Library</h2>
+        <p class="section-copy">Browse, search, and play the games in MattBread Arcade.</p>
+      </div>
+      <input class="search" id="library-search" type="search" placeholder="Search games or genres…" aria-label="Search games or genres">
+    </div>
 
-<section class="view" id="view-genres">
-<div class="section-head">
-<div>
-<div class="section-kicker">Find your play style</div>
-<h2>Genres</h2>
-<p class="section-copy">Games can be sorted into genres so visitors can find exactly what they feel like playing.</p>
-</div>
-</div>
-<div class="genre-list" id="all-genres"></div>
-</section>
+    <!-- Cards are written directly in the HTML so they don't depend on JavaScript to appear. -->
+    <div class="game-grid" id="library-games">
+      <article class="game-card" data-title="paddle blitz arcade">
+        <span class="game-icon">🏓</span><h3>Paddle Blitz</h3><span class="game-status">Arcade</span>
+        <p>Fast paddle action. Keep the rally alive.</p><a class="play-link" href="games/mini-pack-01/paddle-blitz.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="snake circuit arcade">
+        <span class="game-icon">🐍</span><h3>Snake Circuit</h3><span class="game-status">Arcade</span>
+        <p>Collect, grow, and avoid your own tail.</p><a class="play-link" href="games/mini-pack-01/snake-circuit.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="meteor tap casual">
+        <span class="game-icon">☄️</span><h3>Meteor Tap</h3><span class="game-status">Casual</span>
+        <p>React quickly as meteors streak across the screen.</p><a class="play-link" href="games/mini-pack-01/meteor-tap.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="sky hopper platformer">
+        <span class="game-icon">🪂</span><h3>Sky Hopper</h3><span class="game-status">Platformer</span>
+        <p>Jump your way through a sky-high challenge.</p><a class="play-link" href="games/mini-pack-01/sky-hopper.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="target pop arcade">
+        <span class="game-icon">🎯</span><h3>Target Pop</h3><span class="game-status">Arcade</span>
+        <p>Test your aim and hit the targets.</p><a class="play-link" href="games/mini-pack-01/target-pop.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="memory matrix puzzle">
+        <span class="game-icon">🧠</span><h3>Memory Matrix</h3><span class="game-status">Puzzle</span>
+        <p>Flip cards and challenge your memory.</p><a class="play-link" href="games/mini-pack-01/memory-matrix.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="brick breaker arcade">
+        <span class="game-icon">🧱</span><h3>Brick Breaker</h3><span class="game-status">Arcade</span>
+        <p>Break every brick and keep the ball in play.</p><a class="play-link" href="games/mini-pack-01/brick-breaker.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="lane racer racing">
+        <span class="game-icon">🏎️</span><h3>Lane Racer</h3><span class="game-status">Racing</span>
+        <p>Dodge traffic and push for a new record.</p><a class="play-link" href="games/mini-pack-01/lane-racer.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="quick math puzzle">
+        <span class="game-icon">🔢</span><h3>Quick Math</h3><span class="game-status">Puzzle</span>
+        <p>Race the clock and solve the equations.</p><a class="play-link" href="games/mini-pack-01/quick-math.html">PLAY GAME ↗</a>
+      </article>
+      <article class="game-card" data-title="gemstone quest adventure">
+        <span class="game-icon">💎</span><h3>Gemstone Quest</h3><span class="game-status">Adventure</span>
+        <p>Set out on a quest to discover precious gems.</p><a class="play-link" href="games/mini-pack-01/gemstone-quest.html">PLAY GAME ↗</a>
+      </article>
+    </div>
+    <p id="search-count" class="section-copy" aria-live="polite">10 games in the library.</p>
+    <div class="empty-state" id="no-results" hidden><strong>No games found.</strong><p>Try another title or genre.</p></div>
+  </section>
+
+  <section class="view" id="view-az">
+    <div class="section-head"><div><div class="section-kicker">Browse alphabetically</div><h2>Categories A–Z</h2><p class="section-copy">Choose a letter to find matching game titles.</p></div></div>
+    <div class="letter-bar" id="letter-bar"></div>
+    <div class="game-grid" id="az-games"></div>
+    <div class="empty-state" id="az-empty">Choose a letter to see matching games.</div>
+  </section>
+
+  <section class="view" id="view-genres">
+    <div class="section-head"><div><div class="section-kicker">Find your play style</div><h2>Genres</h2><p class="section-copy">Choose a genre to filter the game library.</p></div></div>
+    <div class="genre-list" id="all-genres"></div>
+  </section>
 </main>
-</div>
 
 <footer>
-<div class="shell footer-inner">
-<div class="footer-brand">MattBread <span>Arcade</span></div>
-<div class="credits">
-<span><b>Developer</b> — Mxtt704</span>
-<span><b>YouTube</b> — Mxtt704</span>
-<span><b>TikTok</b> — mxtt704</span>
-</div>
-<div class="copyright">© <span id="year"></span> MattBread Arcade. Built for fun.</div>
-</div>
+  <div class="shell footer-inner">
+    <div class="footer-brand">MattBread <span>Arcade</span></div>
+    <div class="credits">
+      <span><b>Developer</b> — Mxtt704</span>
+      <span><b>YouTube</b> — Mxtt704</span>
+      <span><b>TikTok</b> — mxttbread</span>
+    </div>
+    <div class="copyright">© <span id="year"></span> MattBread Arcade. Built for fun.</div>
+  </div>
 </footer>
 
 <script>
-  const games = [
-  {title:"Paddle Blitz",genre:"Arcade",icon:"🏓",file:"paddle-blitz.html"},
-  {title:"Snake Circuit",genre:"Arcade",icon:"🐍",file:"snake-circuit.html"},
-  {title:"Meteor Tap",genre:"Casual",icon:"☄️",file:"meteor-tap.html"},
-  {title:"Sky Hopper",genre:"Platformer",icon:"🪂",file:"sky-hopper.html"},
-  {title:"Target Pop",genre:"Arcade",icon:"🎯",file:"target-pop.html"},
-  {title:"Memory Matrix",genre:"Puzzle",icon:"🧠",file:"memory-matrix.html"},
-  {title:"Brick Breaker",genre:"Arcade",icon:"🧱",file:"brick-breaker.html"},
-  {title:"Lane Racer",genre:"Racing",icon:"🏎️",file:"lane-racer.html"},
-  {title:"Quick Math",genre:"Puzzle",icon:"🔢",file:"quick-math.html"},
-  {title:"Gemstone Quest",genre:"Adventure",icon:"💎",file:"gemstone-quest.html"}
-];
+(function () {
+  "use strict";
 
-function renderGames(){
-  const grid = document.getElementById("library-games");
+  const views = document.querySelectorAll(".view");
+  const navButtons = document.querySelectorAll("[data-view]");
   const search = document.getElementById("library-search");
-  if(!grid) return;
+  const cards = Array.from(document.querySelectorAll("#library-games .game-card"));
+  const count = document.getElementById("search-count");
+  const noResults = document.getElementById("no-results");
 
-  const term = (search?.value || "").trim().toLowerCase();
-  const filtered = games.filter(g =>
-    (g.title + " " + g.genre).toLowerCase().includes(term)
-  );
+  function showView(name) {
+    views.forEach(view => {
+      view.classList.toggle("active", view.id === "view-" + name);
+    });
+    document.querySelectorAll(".nav-btn").forEach(button => {
+      button.classList.toggle("active", button.dataset.view === name);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
-  grid.innerHTML = filtered.length ? filtered.map(g => `
-    <article class="game-card">
-      <span class="game-icon">${g.icon}</span>
-      <h3>${g.title}</h3>
-      <span class="game-status">${g.genre}</span>
-      <p>Play ${g.title} in MattBread Arcade.</p>
-      <a href="games/mini-pack-01/${g.file}">PLAY GAME ↗</a>
-    </article>
-  `).join("") : `
-    <div class="empty-state">
-      <strong>No games found.</strong>
-      <p>Try another title or genre.</p>
-    </div>
-  `;
-}
-const genres=[
-["Action","Fast-paced gameplay"],
-["Adventure","Explore and discover"],
-["Arcade","Classic pick-up-and-play"],
-["Puzzle","Think it through"],
-["Platformer","Jump, dodge, and run"],
-["Racing","Speed and competition"],
-["Sports","Play to win"],
-["Strategy","Plan your next move"],
-["Horror","For the brave"],
-["Casual","Easy to jump into"],
-["Multiplayer","Play with others"],
-["Retro","Old-school energy"]
-];
+  navButtons.forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      showView(button.dataset.view);
+    });
+  });
 
-function genreMarkup([name,description]){
-return `<button class="genre" data-genre="${name.toLowerCase()}"><span><span class="genre-name">${name}</span><br><span class="genre-count">${description}</span></span><span aria-hidden="true" style="color:var(--green)">↗</span></button>`;
-}
+  function filterGames(term) {
+    term = term.trim().toLowerCase();
+    let visible = 0;
 
-document.getElementById('home-genres').innerHTML=genres.slice(0,6).map(genreMarkup).join('');
-document.getElementById('all-genres').innerHTML=genres.map(genreMarkup).join('');
-document.getElementById('year').textContent=new Date().getFullYear();
+    cards.forEach(card => {
+      const matches = card.dataset.title.includes(term);
+      card.hidden = !matches;
+      if (matches) visible++;
+    });
 
-const letterBar=document.getElementById('letter-bar');
-letterBar.innerHTML='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>`<button class="letter" data-letter="${l}">${l}</button>`).join('');
+    count.textContent = visible + (visible === 1 ? " game" : " games") + " in the library.";
+    noResults.hidden = visible !== 0;
+  }
 
-function showView(name){
-document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`));
-document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-window.scrollTo({top:0,behavior:'smooth'});
-}
+  search.addEventListener("input", () => filterGames(search.value));
 
-document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
-document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.go)));
+  const genres = [
+    ["Action", "Fast-paced gameplay"],
+    ["Adventure", "Explore and discover"],
+    ["Arcade", "Classic pick-up-and-play"],
+    ["Puzzle", "Think it through"],
+    ["Platformer", "Jump, dodge, and run"],
+    ["Racing", "Speed and competition"],
+    ["Sports", "Play to win"],
+    ["Strategy", "Plan your next move"],
+    ["Horror", "For the brave"],
+    ["Casual", "Easy to jump into"],
+    ["Multiplayer", "Play with others"],
+    ["Retro", "Old-school energy"]
+  ];
 
-document.querySelectorAll('[data-letter]').forEach(b=>b.addEventListener('click',()=>{
-document.querySelectorAll('[data-letter]').forEach(x=>x.classList.toggle('selected',x===b));
-document.getElementById('letter-state').innerHTML=`<strong>Games beginning with “${b.dataset.letter}”</strong><p>When the game list is connected, matching titles will appear here.</p>`;
-}));
+  function makeGenreButton([name, description]) {
+    const button = document.createElement("button");
+    button.className = "genre";
+    button.innerHTML = '<span class="genre-name"></span><span class="genre-count"></span>';
+    button.querySelector(".genre-name").textContent = name;
+    button.querySelector(".genre-count").textContent = description;
+    button.addEventListener("click", () => {
+      showView("library");
+      search.value = name.toLowerCase();
+      filterGames(search.value);
+    });
+    return button;
+  }
 
-document.querySelectorAll('[data-genre]').forEach(b=>b.addEventListener('click',()=>{
-  showView('library');
-  const s=document.getElementById('library-search');
-  s.value=b.dataset.genre;
-  renderGames();
-}));
+  const homeGenres = document.getElementById("home-genres");
+  const allGenres = document.getElementById("all-genres");
+  genres.slice(0, 6).forEach(genre => homeGenres.appendChild(makeGenreButton(genre)));
+  genres.forEach(genre => allGenres.appendChild(makeGenreButton(genre)));
 
+  const alphabet = document.getElementById("letter-bar");
+  const azGames = document.getElementById("az-games");
+  const azEmpty = document.getElementById("az-empty");
 
-document.getElementById('library-search').addEventListener('input', renderGames);
-renderGames();  
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
+    const button = document.createElement("button");
+    button.className = "letter";
+    button.textContent = letter;
+    button.addEventListener("click", () => {
+      alphabet.querySelectorAll(".letter").forEach(item => {
+        item.classList.toggle("selected", item === button);
+      });
+      azGames.replaceChildren();
+      const matching = cards.filter(card =>
+        card.querySelector("h3").textContent.toUpperCase().startsWith(letter)
+      );
+
+      matching.forEach(card => {
+        const copy = card.cloneNode(true);
+        copy.hidden = false;
+        azGames.appendChild(copy);
+      });
+
+      azEmpty.hidden = matching.length > 0;
+      azEmpty.textContent = matching.length
+        ? ""
+        : "No games beginning with " + letter + " yet.";
+    });
+    alphabet.appendChild(button);
+  });
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+})();
 </script>
 </body>
 </html>
