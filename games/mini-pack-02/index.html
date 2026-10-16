@@ -57,17 +57,22 @@
     }
 
     .game {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       padding: 20px;
-      min-height: 170px;
+      min-height: 225px;
       border: 1px solid #293653;
       border-radius: 16px;
       background: linear-gradient(145deg, #171f35, var(--panel));
-      transition: transform .2s, border-color .2s;
+      box-shadow: 0 8px 22px rgba(0,0,0,.16);
+      transition: transform .2s, border-color .2s, box-shadow .2s;
     }
 
     .game:hover {
       transform: translateY(-4px);
       border-color: var(--blue);
+      box-shadow: 0 12px 28px rgba(76,167,255,.12);
     }
 
     .game .number {
@@ -78,7 +83,9 @@
     }
 
     .game h2 { margin: 10px 0 6px; font-size: 1.2rem; }
-    .game p { color: var(--muted); font-size: .9rem; min-height: 42px; }
+    .game p { color: var(--muted); font-size: .9rem; line-height: 1.5; flex: 1; min-height: 48px; }
+    .game .play { margin-top: auto; }
+    .game:focus-within { outline: 2px solid var(--blue); outline-offset: 3px; }
 
     .play {
       display: inline-block;
@@ -108,7 +115,7 @@
     <a class="back" href="../../index.html">← Back to MattBread Arcade</a>
     <h1><span>MattBread</span> Arcade</h1>
     <p>MINI-GAME PACK 02 · GAMES 11–20</p>
-    <p>Ten new arcade adventures by Mxtt704.</p>
+    <p>Ten original games, with clear cards and direct Play links for each game.</p>
   </header>
 
   <main class="games">
