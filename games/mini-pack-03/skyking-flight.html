@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#06152d">
+<title>SKYKING Flight | MattBread Arcade</title>
+<style>
+:root{color-scheme:dark;--sky:#43d9ff;--gold:#ffd166;--ink:#06152d}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(#071b3a,#12608a 58%,#f6b65b);font-family:system-ui,Arial,sans-serif;color:#fff;display:grid;place-items:center;padding:18px}
+.shell{width:min(900px,100%);text-align:center}.back{display:inline-block;color:#fff;text-decoration:none;margin-bottom:12px;font-weight:700}.brand{font-size:clamp(2rem,7vw,4rem);font-weight:1000;letter-spacing:.06em;text-shadow:0 4px 0 #102c56,0 0 24px #43d9ff;margin:4px 0}.sub{margin:0 0 16px;color:#e2f6ff}
+.panel{background:rgba(4,17,42,.78);border:2px solid rgba(120,224,255,.65);border-radius:20px;padding:14px;box-shadow:0 18px 60px #06152d77}
+canvas{display:block;width:100%;height:auto;aspect-ratio:800/450;border-radius:12px;background:#6bc8ef;touch-action:manipulation}
+.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:10px;padding:12px 18px;font-weight:900;cursor:pointer;background:var(--gold);color:#17233b}button.secondary{background:#d9f7ff}.hint{font-size:.9rem;color:#e6f8ff;line-height:1.6}footer{margin-top:14px;font-size:.82rem;color:#f1f8ff}
+</style></head>
+<body><main class="shell">
+<a class="back" href="index.html">← Back to Pack 03</a>
+<h1 class="brand">SKYKING</h1><p class="sub">FLIGHT RUN · Keep flying. Beat your best.</p>
+<div class="panel"><canvas id="game" width="800" height="450" aria-label="SKYKING Flight game"></canvas>
+<div class="controls"><button id="start">START / FLY</button><button class="secondary" id="restart">RESTART</button></div>
+<p class="hint">Tap, click, press SPACE, or ↑ to flap. Thread the gaps and don't hit the towers.</p></div>
+<footer>MattBread Arcade · A game by Mxtt704</footer></main>
+<script>
+(()=>{
+const c=document.getElementById('game'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+const startBtn=document.getElementById('start'),restartBtn=document.getElementById('restart');
+let bird,pipes,score,best,playing,started,frame,skyOffset;
+try{best=Number(localStorage.getItem('skykingFlightBest')||0)}catch(e){best=0}
+function reset(){bird={x:175,y:210,vy:0,r:17};pipes=[];score=0;playing=false;started=false;frame=0;skyOffset=0;draw()}
+function flap(){if(!started){started=true;playing=true;bird.vy=-6.2;return}if(playing)bird.vy=-6.2;else if(!playing&&started){reset();started=true;playing=true;bird.vy=-6.2}}
+function addPipe(){let gap=155,top=55+Math.random()*205;pipes.push({x:W+25,top,gap,passed:false})}
+function draw(){
+let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#3bb9f2');g.addColorStop(1,'#d9f4ff');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#ffffff99';for(let i=0;i<5;i++){let x=((i*193-skyOffset*.35)%(W+130)+W+130)%(W+130)-50,y=55+(i%3)*48;ctx.beginPath();ctx.ellipse(x,y,36,12,0,0,Math.PI*2);ctx.ellipse(x+25,y-7,24,15,0,0,Math.PI*2);ctx.ellipse(x+45,y,30,11,0,0,Math.PI*2);ctx.fill()}
+ctx.fillStyle='#4bba6a';ctx.fillRect(0,H-44,W,44);ctx.fillStyle='#277a4d';ctx.fillRect(0,H-44,W,8);
+for(const p of pipes){let bottomY=p.top+p.gap;ctx.fillStyle='#146a62';ctx.fillRect(p.x,0,68,p.top);ctx.fillRect(p.x-7,p.top-20,82,20);ctx.fillRect(p.x,bottomY,68,H-bottomY-44);ctx.fillRect(p.x-7,bottomY,82,20);ctx.fillStyle='#36b79b';ctx.fillRect(p.x+9,0,9,p.top-20);ctx.fillRect(p.x+9,bottomY+20,9,H-bottomY-64)}
+// plane/skybird character
+ctx.save();ctx.translate(bird.x,bird.y);ctx.rotate(Math.max(-.45,Math.min(.65,bird.vy*.055)));ctx.fillStyle='#ffcc43';ctx.beginPath();ctx.ellipse(0,0,23,15,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f68b36';ctx.beginPath();ctx.moveTo(15,-1);ctx.lineTo(34,5);ctx.lineTo(15,9);ctx.closePath();ctx.fill();ctx.fillStyle='#e9faff';ctx.beginPath();ctx.ellipse(-5,5,13,7,-.3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#09203c';ctx.beginPath();ctx.arc(8,-5,3.5,0,Math.PI*2);ctx.fill();ctx.restore();
+ctx.textAlign='left';ctx.fillStyle='#07264a';ctx.font='900 25px system-ui';ctx.fillText('SCORE '+score,20,35);ctx.font='700 15px system-ui';ctx.fillText('BEST '+best,22,59);
+if(!started){overlay('SKYKING FLIGHT','Tap or press SPACE to take off')}else if(!playing){overlay('FLIGHT OVER','Score: '+score+' · Tap restart to fly again')}
+}
+function overlay(title,subtitle){ctx.fillStyle='#06152dbb';ctx.fillRect(140,145,520,135);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='900 34px system-ui';ctx.fillText(title,W/2,195);ctx.font='600 18px system-ui';ctx.fillText(subtitle,W/2,232);ctx.textAlign='left'}
+function end(){playing=false;try{if(score>best){best=score;localStorage.setItem('skykingFlightBest',String(best))}}catch(e){}draw()}
+function tick(){if(playing){frame++;skyOffset+=2.2;bird.vy+=.34;bird.y+=bird.vy;if(frame%92===1)addPipe();for(const p of pipes){p.x-=3.1;if(!p.passed&&p.x+68<bird.x){p.passed=true;score++}const hitX=bird.x+bird.r>p.x&&bird.x-bird.r<p.x+68;const hitY=bird.y-bird.r<p.top||bird.y+bird.r>p.top+p.gap;if(hitX&&hitY)end()}pipes=pipes.filter(p=>p.x>-100);if(bird.y+bird.r>H-44||bird.y-bird.r<0)end();draw()}requestAnimationFrame(tick)}
+startBtn.addEventListener('click',flap);restartBtn.addEventListener('click',()=>{reset();started=true;playing=true;bird.vy=-6.2});c.addEventListener('pointerdown',e=>{e.preventDefault();flap()});window.addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();flap()}});
+reset();requestAnimationFrame(tick)
+})();
+</script></body></html>
