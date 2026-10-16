@@ -5,9 +5,9 @@ const names={"dungeon-escape":"Dungeon Escape","star-blaster":"Star Blaster","pi
 const descriptions={"dungeon-escape":"Find the treasure and reach the green exit. Move with WASD or arrow keys.","star-blaster":"Move left and right, shoot incoming ships. Arrow keys/WASD + Space.","pixel-jumper":"Jump between platforms and grab coins. Move with arrows/A-D; Space to jump.","neon-pinball":"Keep the ball bouncing with the flippers. Use left/right arrows or tap the sides.","turbo-traffic":"Dodge the traffic for as long as possible. Move with arrows or A/D.","block-drop":"Move and rotate falling blocks to complete rows. Arrows move, Up rotates, Down drops.","deep-sea-dive":"Collect pearls and avoid sea mines. Move with arrows or WASD.","bubble-burst":"Click or tap bubbles before they float away. Build your score!","ninja-dash":"Run, jump over traps, and survive. Space/Up to jump.","whack-a-bot":"Whack the bots as they pop up from the arcade machine! Click or tap them. Slower pace, 45 seconds."};
 const titleElement=document.getElementById("game-title");if(titleElement)titleElement.textContent=names[name]||"Mini Game";
 document.getElementById("instructions").textContent=descriptions[name]||"Use the controls to play.";
-let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1,nextBotFrame=0;
+let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1,nextBotFrame=0,lastBotSlot=-1;
 function resize(){const r=canvas.getBoundingClientRect();W=800;H=450;canvas.width=W;canvas.height=H;}resize();
-function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:W/2,y:H-65,w:30,h:30,vx:0,vy:0};grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
+function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:W/2,y:H-65,w:30,h:30,vx:0,vy:0};grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;lastBotSlot=-1;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
 function spawnBlock(){const shapes=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]];player.shape=shapes[Math.floor(Math.random()*shapes.length)];player.x=3;player.y=0;}
 function hit(a,b){return a.x<b.x+(b.w||22)&&a.x+(a.w||22)>b.x&&a.y<b.y+(b.h||22)&&a.y+(a.h||22)>b.y;}
 function loop(){if(!running)return;frame++;ctx.clearRect(0,0,W,H);ctx.fillStyle="#080d1a";ctx.fillRect(0,0,W,H);
@@ -45,10 +45,17 @@ function whack(){
    ctx.strokeStyle="#d39a68";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(xx,yy,57,39,0,0,Math.PI*2);ctx.stroke();
  }
  // Keep a bot up long enough to aim, then give a short breather before the next one.
- if(!items.length && frame%1===0 && frame>=nextBotFrame){
-   const slot=Math.floor(Math.random()*6),xx=cols[slot%3],yy=rows[Math.floor(slot/3)];
+ if(items.length && frame>=nextBotFrame){
+   // Hide the current bot, then leave a short pause before the next one.
+   items=[];
+   nextBotFrame=frame+Math.floor(18+Math.random()*12);
+ } else if(!items.length && frame>=nextBotFrame){
+   let slot=Math.floor(Math.random()*6);
+   if(lastBotSlot>=0){while(slot===lastBotSlot)slot=Math.floor(Math.random()*6);}
+   lastBotSlot=slot;
+   const xx=cols[slot%3],yy=rows[Math.floor(slot/3)];
    items=[{x:xx,y:yy-7,t:"bot",w:58,h:58,slot}];
-   nextBotFrame=frame+Math.floor(70+Math.random()*35);
+   nextBotFrame=frame+Math.floor(60+Math.random()*20);
  }
  items.forEach(i=>{
    ctx.fillStyle="#38bdf8";ctx.beginPath();ctx.ellipse(i.x,i.y+10,34,28,0,0,Math.PI*2);ctx.fill();
