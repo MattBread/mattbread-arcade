@@ -2,12 +2,12 @@
 "use strict";
 const canvas=document.getElementById("game"),ctx=canvas.getContext("2d"),name=document.body.dataset.game;
 const names={"dungeon-escape":"Dungeon Escape","star-blaster":"Star Blaster","pixel-jumper":"Pixel Jumper","neon-pinball":"Neon Pinball","turbo-traffic":"Turbo Traffic","block-drop":"Block Drop","deep-sea-dive":"Deep Sea Dive","bubble-burst":"Bubble Burst","ninja-dash":"Ninja Dash","whack-a-bot":"Whack-a-Bot"};
-const descriptions={"dungeon-escape":"Find the treasure and reach the green exit. Move with WASD or arrow keys.","star-blaster":"Move left and right, shoot incoming ships. Arrow keys/WASD + Space.","pixel-jumper":"Jump between platforms and grab coins. Move with arrows/A-D; Space to jump.","neon-pinball":"Keep the ball bouncing with the flippers. Use left/right arrows or tap the sides.","turbo-traffic":"Dodge the traffic for as long as possible. Move with arrows or A/D.","block-drop":"Move and rotate falling blocks to complete rows. Arrows move, Up rotates, Down drops.","deep-sea-dive":"Collect pearls and avoid sea mines. Move with arrows or WASD.","bubble-burst":"Click or tap bubbles before they float away. Build your score!","ninja-dash":"Run, jump over traps, and survive. Space/Up to jump.","whack-a-bot":"Click or tap the robots as they pop up. Score before time runs out."};
+const descriptions={"dungeon-escape":"Find the treasure and reach the green exit. Move with WASD or arrow keys.","star-blaster":"Move left and right, shoot incoming ships. Arrow keys/WASD + Space.","pixel-jumper":"Jump between platforms and grab coins. Move with arrows/A-D; Space to jump.","neon-pinball":"Keep the ball bouncing with the flippers. Use left/right arrows or tap the sides.","turbo-traffic":"Dodge the traffic for as long as possible. Move with arrows or A/D.","block-drop":"Move and rotate falling blocks to complete rows. Arrows move, Up rotates, Down drops.","deep-sea-dive":"Collect pearls and avoid sea mines. Move with arrows or WASD.","bubble-burst":"Click or tap bubbles before they float away. Build your score!","ninja-dash":"Run, jump over traps, and survive. Space/Up to jump.","whack-a-bot":"Whack the bots as they pop up from the arcade machine! Click or tap them. Slower pace, 45 seconds."};
 const titleElement=document.getElementById("game-title");if(titleElement)titleElement.textContent=names[name]||"Mini Game";
 document.getElementById("instructions").textContent=descriptions[name]||"Use the controls to play.";
-let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1;
+let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1,nextBotFrame=0;
 function resize(){const r=canvas.getBoundingClientRect();W=800;H=450;canvas.width=W;canvas.height=H;}resize();
-function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:W/2,y:H-65,w:30,h:30,vx:0,vy:0};grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot")time=25;document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
+function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:W/2,y:H-65,w:30,h:30,vx:0,vy:0};grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
 function spawnBlock(){const shapes=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]];player.shape=shapes[Math.floor(Math.random()*shapes.length)];player.x=3;player.y=0;}
 function hit(a,b){return a.x<b.x+(b.w||22)&&a.x+(a.w||22)>b.x&&a.y<b.y+(b.h||22)&&a.y+(a.h||22)>b.y;}
 function loop(){if(!running)return;frame++;ctx.clearRect(0,0,W,H);ctx.fillStyle="#080d1a";ctx.fillRect(0,0,W,H);
@@ -29,8 +29,38 @@ function blockdrop(){const cell=20,left=270,top=24;ctx.fillStyle="#111b2d";ctx.f
 function sea(){ctx.fillStyle="#0b4260";ctx.fillRect(0,0,W,H);for(let i=0;i<8;i++){ctx.strokeStyle="#16769a";ctx.beginPath();ctx.arc((i*127+frame*1.2)%W,70+i*42,40,0,Math.PI);ctx.stroke();}if(frame%40===0)items.push({x:30+Math.random()*730,y:40+Math.random()*350,t:Math.random()<.72?"pearl":"mine"});move(4);items.forEach(i=>{ctx.fillStyle=i.t==="pearl"?"#fde68a":"#fb7185";ctx.beginPath();ctx.arc(i.x,i.y,12,0,7);ctx.fill();if(hit(player,{...i,w:24,h:24})){if(i.t==="pearl")score+=10;else lives--;i.y=-100;}});items=items.filter(i=>i.y>-50);playerDraw("#a5f3fc");}
 function bubbles(){if(frame%18===0)items.push({x:25+Math.random()*750,y:H+20,t:"bubble",r:12+Math.random()*15,vy:1+Math.random()*2});items.forEach(i=>{i.y-=i.vy;ctx.fillStyle=["#38bdf8","#c084fc","#fb7185"][Math.floor(i.x)%3];ctx.beginPath();ctx.arc(i.x,i.y,i.r,0,7);ctx.fill();});items=items.filter(i=>{if(i.y< -30){lives--;return false;}return true;});text("TAP / CLICK BUBBLES",20,30,16);}
 function ninja(){ctx.fillStyle="#263449";ctx.fillRect(0,H-30,W,30);if(frame%65===0)items.push({x:W+20,y:H-55,t:"trap",w:25,h:25});items.forEach(i=>{i.x-=5;ctx.fillStyle="#fb7185";ctx.fillRect(i.x,i.y,i.w,i.h);if(hit(player,i)){if(player.y<H-75){i.x=-100;score+=5;}else{lives--;i.x=-100;}}});items=items.filter(i=>i.x>-50);player.vy=(player.vy||0)+.5;player.y+=player.vy;if(player.y>H-60){player.y=H-60;player.vy=0;}if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-10;score+=frame%35===0?1:0;playerDraw("#a78bfa");text("JUMP OVER THE TRAPS",20,30,16);}
-function whack(){time-=1/60;if(frame%25===0)items=[{x:40+Math.random()*680,y:60+Math.random()*320,t:"bot",w:45,h:45}];items.forEach(i=>{ctx.fillStyle="#f43f5e";ctx.beginPath();ctx.arc(i.x,i.y,22,0,7);ctx.fill();text("🤖",i.x-16,i.y+8,25);});text("CLICK THE BOT!",20,30,18);}
-let pointerDown=false;canvas.addEventListener("pointerdown",e=>{pointerDown=true;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;if(name==="bubble-burst"){items=items.filter(i=>{if(Math.hypot(i.x-x,i.y-y)<i.r+8){score+=10;return false;}return true;});}if(name==="whack-a-bot"&&items.some(i=>Math.hypot(i.x-x,i.y-y)<35)){score+=10;items=[];}if(name==="pixel-jumper"||name==="ninja-dash"){if(player.vy===0)player.vy=-10;}if(name==="neon-pinball"){ball.vy=-Math.abs(ball.vy)-1;score++;}});canvas.addEventListener("pointerup",()=>pointerDown=false);
+function whack(){
+ time-=1/60;
+ // Draw a classic wooden whack-a-mole cabinet with six padded holes.
+ const bx=105,by=66,bw=590,bh=340;
+ ctx.fillStyle="#321b18";ctx.fillRect(bx-9,by-9,bw+18,bh+18);
+ ctx.fillStyle="#8b4b2d";ctx.fillRect(bx,by,bw,bh);
+ ctx.fillStyle="#b86b3d";ctx.fillRect(bx+10,by+10,bw-20,bh-20);
+ ctx.fillStyle="#facc15";ctx.fillRect(bx+18,by+18,bw-36,45);
+ ctx.fillStyle="#25151b";ctx.font="bold 25px system-ui";ctx.textAlign="center";ctx.fillText("WHACK-A-BOT",W/2,by+48);
+ ctx.fillStyle="#111827";ctx.fillRect(bx+22,by+75,bw-44,205);
+ const cols=[bx+120,bx+295,bx+470],rows=[by+120,by+220];
+ for(const yy of rows)for(const xx of cols){
+   ctx.fillStyle="#050914";ctx.beginPath();ctx.ellipse(xx,yy,57,39,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle="#d39a68";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(xx,yy,57,39,0,0,Math.PI*2);ctx.stroke();
+ }
+ // Keep a bot up long enough to aim, then give a short breather before the next one.
+ if(!items.length && frame%1===0 && frame>=nextBotFrame){
+   const slot=Math.floor(Math.random()*6),xx=cols[slot%3],yy=rows[Math.floor(slot/3)];
+   items=[{x:xx,y:yy-7,t:"bot",w:58,h:58,slot}];
+   nextBotFrame=frame+Math.floor(70+Math.random()*35);
+ }
+ items.forEach(i=>{
+   ctx.fillStyle="#38bdf8";ctx.beginPath();ctx.ellipse(i.x,i.y+10,34,28,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#93c5fd";ctx.beginPath();ctx.arc(i.x,i.y-7,25,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#071426";ctx.beginPath();ctx.arc(i.x-9,i.y-10,4,0,Math.PI*2);ctx.arc(i.x+9,i.y-10,4,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle="#071426";ctx.lineWidth=3;ctx.beginPath();ctx.arc(i.x,i.y,10,.15,Math.PI-.15);ctx.stroke();
+ });
+ ctx.fillStyle="#171923";ctx.fillRect(bx+22,by+291,bw-44,32);
+ ctx.fillStyle="#facc15";ctx.font="bold 18px system-ui";ctx.textAlign="center";ctx.fillText("SCORE  "+score+"     TIME  "+Math.max(0,Math.ceil(time)),W/2,by+314);
+ ctx.textAlign="left";text("TAP / CLICK THE BOT",20,30,17,"#e2e8f0");
+}
+let pointerDown=false;canvas.addEventListener("pointerdown",e=>{pointerDown=true;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;if(name==="bubble-burst"){items=items.filter(i=>{if(Math.hypot(i.x-x,i.y-y)<i.r+8){score+=10;return false;}return true;});}if(name==="whack-a-bot"&&items.some(i=>Math.hypot(i.x-x,i.y-y)<42)){score+=10;items=[];nextBotFrame=frame+Math.floor(45+Math.random()*25);}if(name==="pixel-jumper"||name==="ninja-dash"){if(player.vy===0)player.vy=-10;}if(name==="neon-pinball"){ball.vy=-Math.abs(ball.vy)-1;score++;}});canvas.addEventListener("pointerup",()=>pointerDown=false);
 function move(speed){if(keys.ArrowLeft||keys.a)player.x-=speed;if(keys.ArrowRight||keys.d)player.x+=speed;if(keys.ArrowUp||keys.w)player.y-=speed;if(keys.ArrowDown||keys.s)player.y+=speed;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(35,Math.min(H-player.h,player.y));}
 document.addEventListener("keydown",e=>{keys[e.key]=true;if([" ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key))e.preventDefault();if(name==="block-drop"&&e.key==="ArrowUp"){e.preventDefault();const rotated=player.shape[0].map((_,i)=>player.shape.map(row=>row[i]).reverse());if(!blockCollision(rotated,player.x,player.y))player.shape=rotated;}if(name==="block-drop"&&e.code==="Space"){e.preventDefault();hardDrop();}});document.addEventListener("keyup",e=>keys[e.key]=false);
 document.getElementById("restart").addEventListener("click",reset);reset();
