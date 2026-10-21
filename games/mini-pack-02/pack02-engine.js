@@ -7,7 +7,7 @@ const titleElement=document.getElementById("game-title");if(titleElement)titleEl
 document.getElementById("instructions").textContent=descriptions[name]||"Use the controls to play.";
 let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1,nextBotFrame=0,lastBotSlot=-1,ninjaPlatforms=[];
 function resize(){const r=canvas.getBoundingClientRect();W=800;H=450;canvas.width=W;canvas.height=H;}resize();
-function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:W/2,y:H-65,w:30,h:30,vx:0,vy:0};ninjaPlatforms=[];if(name==="ninja-dash")ninjaPlatforms=[{x:155,y:335,w:115,h:14},{x:335,y:285,w:105,h:14},{x:510,y:325,w:125,h:14},{x:720,y:265,w:110,h:14}];grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;lastBotSlot=-1;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
+function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:90,y:H-130,w:30,h:30,vx:0,vy:0};ninjaPlatforms=[];if(name==="ninja-dash")ninjaPlatforms=[{x:65,y:350,w:150,h:18},{x:255,y:305,w:150,h:18},{x:445,y:350,w:150,h:18},{x:635,y:300,w:150,h:18}];grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;lastBotSlot=-1;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
 function spawnBlock(){const shapes=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]];player.shape=shapes[Math.floor(Math.random()*shapes.length)];player.x=3;player.y=0;}
 function hit(a,b){return a.x<b.x+(b.w||22)&&a.x+(a.w||22)>b.x&&a.y<b.y+(b.h||22)&&a.y+(a.h||22)>b.y;}
 function loop(){if(!running)return;frame++;ctx.clearRect(0,0,W,H);ctx.fillStyle="#080d1a";ctx.fillRect(0,0,W,H);
@@ -35,13 +35,14 @@ function ninja(){
  if(frame%55===0)items.push({x:W+20,y:H-55,t:"trap",w:25,h:25});
  // Scroll the course slowly so the platforms remain easy to see and reach.
  ninjaPlatforms.forEach(p=>{
-   p.x-=1.8;
-   ctx.fillStyle="#334155";ctx.fillRect(p.x,p.y,p.w,p.h);
-   ctx.fillStyle="#22d3ee";ctx.fillRect(p.x,p.y,p.w,5);
-   ctx.fillStyle="#64748b";ctx.fillRect(p.x+8,p.y+p.h,p.w-16,5);
+   p.x-=1.2;
+   ctx.fillStyle="#0e7490";ctx.fillRect(p.x-2,p.y-2,p.w+4,p.h+4);
+   ctx.fillStyle="#164e63";ctx.fillRect(p.x,p.y,p.w,p.h);
+   ctx.fillStyle="#67e8f9";ctx.fillRect(p.x,p.y,p.w,7);
+   ctx.fillStyle="#a5f3fc";ctx.fillRect(p.x+10,p.y+p.h,p.w-20,4);
  });
  ninjaPlatforms=ninjaPlatforms.filter(p=>p.x+p.w>0);
- if(frame%70===0)ninjaPlatforms.push({x:W+10,y:[270,300,325,345][Math.floor(Math.random()*4)],w:135,h:16});
+ if(frame%90===0)ninjaPlatforms.push({x:W+10,y:[285,315,345][Math.floor(Math.random()*3)],w:150,h:18});
  const previousBottom=player.y+player.h,previousY=player.y;
  player.vy=(player.vy||0)+.5;player.y+=player.vy;
  let landed=false;
