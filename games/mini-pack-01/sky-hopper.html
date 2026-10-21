@@ -1,314 +1,42 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#37b9f5">
 <title>Sky Hopper | MattBread Arcade</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#080d20;color:#f4f7ff;font-family:Arial,sans-serif;text-align:center;padding:18px}
-header{margin:10px auto 18px}
-.brand{color:#00e5ff;font-weight:bold;letter-spacing:4px;font-size:12px}
-h1{font-size:clamp(36px,8vw,56px);margin:10px 0;color:#ffe14a;text-shadow:3px 4px #e94e35}
-p{color:#a9bbef}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.5fr);gap:14px;max-width:850px;margin:auto}
-.panel{background:#101a38;border:1px solid #147bff;border-radius:15px;padding:16px}
-.stat{font-size:13px;color:#00dfff;text-align:left;margin:8px 0}
-.stat strong{display:block;color:#ffe14a;font-size:28px;margin-top:4px}
-canvas{width:100%;height:auto;display:block;border:4px solid #00dfff;border-radius:14px;background:#36baff;touch-action:none}
-.gamewrap{min-width:0}
-button{cursor:pointer;border:0;border-radius:12px;padding:14px 20px;background:linear-gradient(100deg,#00c8ff,#625cff);color:white;font-weight:bold;font-size:16px;margin:12px 4px}
-button:active{transform:scale(.97)}
-.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-.controls button{min-width:65px;font-size:22px;touch-action:none}
-#message{min-height:22px;color:#00e5ff;font-weight:bold}
-.hint{font-size:13px;line-height:1.6}
-@media(max-width:600px){.layout{grid-template-columns:1fr}.statsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.panel{padding:12px}.stat{text-align:center}.stat strong{font-size:22px}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:18px;background:radial-gradient(circle at top,#1c3154,#080b14 72%);font-family:Arial,Helvetica,sans-serif;color:#f7fbff;text-align:center}.wrap{width:min(760px,100%);margin:auto}.back{display:inline-block;color:#38bdf8;text-decoration:none;font-weight:800;margin:4px 0 15px}.brand{color:#38bdf8;letter-spacing:3px;font-size:12px;font-weight:900}h1{font-size:clamp(2.2rem,8vw,3.5rem);margin:7px 0;color:#ffe15a;text-shadow:3px 4px #e94e35}p{color:#b7c8e8;line-height:1.5}.hud{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0}.stat{min-width:95px;background:#101a32;border:1px solid #28496d;border-radius:11px;padding:9px 14px;color:#9bdcff;font-size:12px;font-weight:800;letter-spacing:1px}.stat strong{display:block;color:#ffe15a;font-size:24px;margin-top:4px}canvas{width:100%;height:auto;display:block;aspect-ratio:480/620;border:4px solid #4dd8ff;border-radius:15px;background:#63caff;touch-action:manipulation;box-shadow:0 12px 35px #0006}.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:13px}button{border:0;border-radius:11px;padding:12px 20px;background:linear-gradient(100deg,#00bfff,#625cff);color:white;font-size:15px;font-weight:900;cursor:pointer}button:active{transform:scale(.97)}.hint{font-size:13px;margin-top:14px}@media(max-width:520px){body{padding:10px}.stat{min-width:82px;padding:8px}.stat strong{font-size:20px}button{padding:12px 15px}}
 </style>
 </head>
-<body>
-<header>
-  <div class="brand">MATTBREAD ARCADE</div>
-  <h1>SKY HOPPER</h1>
-  <p>Jump. Collect. Reach the top!</p>
-</header>
-
-<div class="layout">
-  <aside class="panel statsrow">
-    <div class="stat">SCORE<strong id="score">0</strong></div>
-    <div class="stat">BEST<strong id="best">0</strong></div>
-    <div class="stat">COINS<strong id="coins">0</strong></div>
-  </aside>
-  <main class="gamewrap">
-    <canvas id="game" width="480" height="620" aria-label="Sky Hopper platform game"></canvas>
-    <div id="message">Press START GAME to play!</div>
-    <div class="controls">
-      <button id="left" aria-label="Move left">◀</button>
-      <button id="jump" aria-label="Jump">▲</button>
-      <button id="right" aria-label="Move right">▶</button>
-    </div>
-    <button id="start">START GAME</button>
-  </main>
-</div>
-<p class="hint">Move: ← → or A / D &nbsp; · &nbsp; Jump: ↑, W, Space or ▲<br>Collect coins, land on platforms, and reach the flag!</p>
-
+<body><main class="wrap">
+<a class="back" href="../../index.html">← Back to MattBread Arcade</a>
+<div class="brand">MATTBREAD ARCADE</div><h1>SKY HOPPER</h1><p>Flap through the pipes. Don't hit anything. Beat your best score!</p>
+<div class="hud"><div class="stat">SCORE<strong id="score">0</strong></div><div class="stat">BEST<strong id="best">0</strong></div></div>
+<canvas id="game" width="480" height="620" aria-label="Sky Hopper Flappy Bird-style game"></canvas>
+<div class="controls"><button id="start">START GAME</button><button id="restart">RESTART</button></div>
+<p class="hint">Controls: SPACE, ↑, click, or tap to flap. Works on mobile and desktop.</p>
+</main>
 <script>
-(() => {
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const W=canvas.width,H=canvas.height;
+(()=>{
+const c=document.getElementById('game'),ctx=c.getContext('2d'),W=c.width,H=c.height;
 const $=id=>document.getElementById(id);
-let best=0;
-try{best=Number(localStorage.getItem("mbaSkyHopperBest"))||0}catch(e){}
-$("best").textContent=best;
-
-let player,platforms,coins,keys={},score=0,coinCount=0,camera=0;
-let playing=false,finished=false,frame=0,raf=0;
-let startTime=0;
-
-function reset(){
-  player={x:70,y:500,w:27,h:34,vx:0,vy:0};
-  platforms=[
-    {x:25,y:550,w:110,h:18},
-    {x:190,y:465,w:100,h:18},
-    {x:45,y:375,w:95,h:18},
-    {x:260,y:300,w:100,h:18},
-    {x:115,y:215,w:100,h:18},
-    {x:300,y:135,w:110,h:18},
-    {x:165,y:55,w:100,h:18},
-    {x:25,y:-35,w:105,h:18},
-    {x:270,y:-120,w:100,h:18},
-    {x:145,y:-205,w:105,h:18}
-  ];
-  coins=[
-    {x:235,y:425,taken:false},
-    {x:90,y:335,taken:false},
-    {x:310,y:260,taken:false},
-    {x:165,y:175,taken:false},
-    {x:355,y:95,taken:false},
-    {x:210,y:15,taken:false},
-    {x:75,y:-75,taken:false},
-    {x:320,y:-160,taken:false}
-  ];
-  score=0;coinCount=0;camera=0;frame=0;
-  player.vy=-8.5;
-  $("score").textContent=0;
-  $("coins").textContent=0;
-}
-
-function cloud(x,y,s=1){
-  ctx.fillStyle="rgba(255,255,255,.8)";
-  ctx.beginPath();
-  ctx.arc(x,y,13*s,0,Math.PI*2);
-  ctx.arc(x+16*s,y-8*s,17*s,0,Math.PI*2);
-  ctx.arc(x+34*s,y,12*s,0,Math.PI*2);
-  ctx.fill();
-}
-
-function drawPlatform(p){
-  const y=p.y+camera;
-  if(y<-30||y>H+30)return;
-  ctx.fillStyle="#7046a2";
-  ctx.fillRect(p.x+6,y+9,p.w-12,15);
-  ctx.fillStyle="#b96e52";
-  ctx.fillRect(p.x+10,y+14,p.w-20,9);
-  ctx.fillStyle="#31e58a";
-  ctx.fillRect(p.x,y,p.w,12);
-  ctx.fillStyle="#9aff87";
-  for(let x=p.x+5;x<p.x+p.w-4;x+=16)ctx.fillRect(x,y-3,8,4);
-}
-
-function drawPlayer(){
-  const x=player.x,y=player.y+camera;
-  ctx.fillStyle="#20234a";
-  ctx.fillRect(x+3,y+8,player.w-6,player.h-8);
-  ctx.fillStyle="#fff";
-  ctx.fillRect(x+5,y+10,player.w-10,player.h-13);
-  ctx.fillStyle="#ff426b";
-  ctx.fillRect(x+2,y+2,player.w-3,9);
-  ctx.fillStyle="#ffdb5c";
-  ctx.fillRect(x+17,y+7,7,4);
-  ctx.fillStyle="#20234a";
-  ctx.fillRect(x+9,y+17,4,5);
-  ctx.fillRect(x+19,y+17,4,5);
-  ctx.fillRect(x+7,y+player.h-5,6,6);
-  ctx.fillRect(x+18,y+player.h-5,6,6);
-}
-
-function draw(){
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,"#168cff");
-  sky.addColorStop(1,"#a6edff");
-  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
-
-  for(let i=0;i<7;i++){
-    let y=((i*115+frame*.25)%700)-60;
-    cloud((i*83+20)%W,y,.7+(i%3)*.18);
-  }
-
-  platforms.forEach(drawPlatform);
-
-  coins.forEach(c=>{
-    if(c.taken)return;
-    let y=c.y+camera;
-    if(y<-30||y>H+30)return;
-    ctx.fillStyle="#e88900";
-    ctx.beginPath();ctx.ellipse(c.x,y,11,15,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#ffe83f";
-    ctx.beginPath();ctx.ellipse(c.x,y,7,11,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#fff4a0";
-    ctx.fillRect(c.x-2,y-7,3,10);
-  });
-
-  // Finish flag near the upper end of the course
-  const flagY=-255+camera;
-  ctx.fillStyle="#49335f";
-  ctx.fillRect(355,flagY,5,58);
-  ctx.fillStyle="#ff405e";
-  ctx.beginPath();
-  ctx.moveTo(360,flagY+4);ctx.lineTo(400,flagY+17);
-  ctx.lineTo(360,flagY+31);ctx.fill();
-
-  drawPlayer();
-
-  if(!playing){
-    ctx.fillStyle="rgba(5,10,32,.65)";
-    ctx.fillRect(0,0,W,H);
-    ctx.textAlign="center";
-    ctx.fillStyle="#fff";
-    ctx.font="bold 30px Arial";
-    ctx.fillText(finished?"COURSE COMPLETE!":"SKY HOPPER",W/2,H/2-12);
-    ctx.font="16px Arial";
-    ctx.fillStyle="#00e5ff";
-    ctx.fillText(finished?"You reached the flag!":"Jump between the platforms",W/2,H/2+20);
-  }
-}
-
-function update(){
-  if(!playing)return;
-  frame++;
-
-  const left=keys.ArrowLeft||keys.a||keys.A;
-  const right=keys.ArrowRight||keys.d||keys.D;
-  if(left)player.vx-=.45;
-  if(right)player.vx+=.45;
-  player.vx*=.88;
-  player.vx=Math.max(-4.5,Math.min(4.5,player.vx));
-  player.x+=player.vx;
-  player.x=Math.max(0,Math.min(W-player.w,player.x));
-
-  const oldBottom=player.y+player.h;
-  player.vy+=.32;
-  player.vy=Math.min(player.vy,9);
-  player.y+=player.vy;
-
-  if(player.vy>0){
-    for(const p of platforms){
-      if(oldBottom<=p.y+camera+5 &&
-         player.y+player.h>=p.y+camera &&
-         player.x+player.w>p.x && player.x<p.x+p.w){
-        player.y=p.y+camera-player.h;
-        player.vy=-9;
-        break;
-      }
-    }
-  }
-
-  // Scroll upward as the player climbs
-  if(player.y+camera< H*.38){
-    const shift=H*.38-(player.y+camera);
-    camera+=shift;
-    score+=Math.floor(shift);
-    platforms.forEach(p=>p.y+=shift);
-    coins.forEach(c=>c.y+=shift);
-  }
-
-  // Pick up coins
-  for(const c of coins){
-    if(!c.taken && Math.abs((player.x+player.w/2)-c.x)<23 &&
-       Math.abs((player.y+camera+player.h/2)-c.y)<25){
-      c.taken=true;coinCount++;score+=50;
-      $("coins").textContent=coinCount;
-    }
-  }
-
-  $("score").textContent=score;
-
-  if(player.y+camera>H+25){
-    endGame(false);
-    return;
-  }
-
-  if(player.y+camera<-230){
-    endGame(true);
-    return;
-  }
-
-  draw();
-  raf=requestAnimationFrame(update);
-}
-
-function endGame(won){
-  playing=false;
-  finished=won;
-  cancelAnimationFrame(raf);
-  if(score>best){
-    best=score;
-    $("best").textContent=best;
-    try{localStorage.setItem("mbaSkyHopperBest",String(best))}catch(e){}
-  }
-  $("message").textContent=won?
-    "Amazing! You reached the sky flag!":
-    "You fell! Try again and climb higher.";
-  $("start").textContent="PLAY AGAIN";
-  draw();
-}
-
-function start(){
-  cancelAnimationFrame(raf);
-  playing=false;
-  reset();
-  player.y=500;
-  player.vy=-8.5;
-  playing=true;finished=false;
-  $("message").textContent="Keep hopping and collect the coins!";
-  $("start").textContent="RESTART";
-  draw();
-  raf=requestAnimationFrame(update);
-}
-
-document.addEventListener("keydown",e=>{
-  if(["ArrowLeft","ArrowRight","ArrowUp"," "].includes(e.key))e.preventDefault();
-  keys[e.key]=true;
-  if((e.key==="ArrowUp"||e.key==="w"||e.key==="W"||e.key===" ")&&!playing){
-    start();
-  }
-});
-document.addEventListener("keyup",e=>keys[e.key]=false);
-
-function bindHold(id,key){
-  const b=$(id);
-  const down=e=>{e.preventDefault();keys[key]=true};
-  const up=e=>{e.preventDefault();keys[key]=false};
-  b.addEventListener("pointerdown",down);
-  b.addEventListener("pointerup",up);
-  b.addEventListener("pointerleave",up);
-  b.addEventListener("pointercancel",up);
-}
-bindHold("left","ArrowLeft");
-bindHold("right","ArrowRight");
-$("jump").addEventListener("click",()=>{
-  if(!playing)start();
-  else if(player.vy>-2)player.vy=-9;
-});
-$("start").addEventListener("click",start);
-
-reset();
-playing=false;
-draw();
+const store='mbaSkyHopperFlappyBest';let best=0;try{best=Number(localStorage.getItem(store)||0)}catch(e){}
+$('best').textContent=best;
+let bird,pipes,score,frame,playing,ready,raf,groundShift,skyShift;
+function reset(){bird={x:128,y:270,vy:0,r:16,rot:0};pipes=[];score=0;frame=0;playing=false;ready=true;groundShift=0;skyShift=0;$('score').textContent='0';$('start').textContent='START GAME';draw();overlay('SKY HOPPER','Tap, click, or press SPACE to flap');}
+function start(){cancelAnimationFrame(raf);reset();playing=true;ready=false;bird.vy=-5.2;$('start').textContent='FLAP!';raf=requestAnimationFrame(loop)}
+function flap(){if(!playing){start();return}bird.vy=-5.3}
+function addPipe(){const gap=174,top=70+Math.random()*255;pipes.push({x:W+12,top,gap,passed:false})}
+function cloud(x,y,s){ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc(x,y,17*s,0,Math.PI*2);ctx.arc(x+19*s,y-9*s,21*s,0,Math.PI*2);ctx.arc(x+43*s,y,16*s,0,Math.PI*2);ctx.fill()}
+function background(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#36a9ff');g.addColorStop(.68,'#8de6ff');g.addColorStop(1,'#e0fbff');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);for(let i=0;i<5;i++){let x=((i*143-skyShift*.35)%(W+130)+W+130)%(W+130)-60;cloud(x,75+(i%3)*85,.65+(i%2)*.22)}}
+function drawPipes(){for(const p of pipes){const bottom=p.top+p.gap;const grad=ctx.createLinearGradient(p.x,0,p.x+62,0);grad.addColorStop(0,'#168447');grad.addColorStop(.35,'#4fe05e');grad.addColorStop(.72,'#25b747');grad.addColorStop(1,'#116b38');ctx.fillStyle=grad;ctx.fillRect(p.x,0,62,p.top);ctx.fillRect(p.x,bottom,62,H-bottom-54);ctx.fillStyle='#55ed67';ctx.fillRect(p.x-6,p.top-22,74,22);ctx.fillRect(p.x-6,bottom,74,22);ctx.fillStyle='#0b7136';ctx.fillRect(p.x+7,0,5,p.top-22);ctx.fillRect(p.x+7,bottom+22,5,H-bottom-76);}}
+function drawGround(){const y=H-54;ctx.fillStyle='#d6a34d';ctx.fillRect(0,y,W,54);ctx.fillStyle='#7b4b2c';ctx.fillRect(0,y+18,W,36);ctx.fillStyle='#56d34f';ctx.fillRect(0,y,W,15);ctx.fillStyle='#b2ff68';for(let x=-(groundShift%32);x<W;x+=32)ctx.fillRect(x,y+2,17,4);ctx.fillStyle='#f8d78a';for(let x=-(groundShift%28);x<W;x+=28)ctx.fillRect(x,y+23,13,5)}
+function drawBird(){ctx.save();ctx.translate(bird.x,bird.y);ctx.rotate(Math.max(-.45,Math.min(.9,bird.rot)));ctx.fillStyle='#f8c936';ctx.strokeStyle='#a65b1c';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,18,15,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#f29b30';ctx.beginPath();ctx.ellipse(-5,5,9,6,Math.sin(frame*.3)*.5,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(8,-6,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#17233c';ctx.beginPath();ctx.arc(10,-6,2.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ff7a24';ctx.beginPath();ctx.moveTo(14,1);ctx.lineTo(29,5);ctx.lineTo(14,9);ctx.closePath();ctx.fill();ctx.restore()}
+function overlay(title,sub){ctx.fillStyle='rgba(5,20,45,.38)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='900 31px Arial';ctx.shadowColor='#16335c';ctx.shadowBlur=5;ctx.fillText(title,W/2,H*.43);ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold 16px Arial';ctx.fillText(sub,W/2,H*.43+31)}
+function draw(){background();drawPipes();drawGround();drawBird();ctx.textAlign='center';ctx.font='900 42px Arial';ctx.lineWidth=4;ctx.strokeStyle='#1c542e';ctx.strokeText(String(score),W/2,58);ctx.fillStyle='#fff';ctx.fillText(String(score),W/2,58);if(!playing)overlay(ready?'SKY HOPPER':'GAME OVER',ready?'Tap, click, or press SPACE to flap':'Score '+score+' · Tap to try again')}
+function finish(){playing=false;ready=false;$('start').textContent='PLAY AGAIN';if(score>best){best=score;$('best').textContent=best;try{localStorage.setItem(store,String(best))}catch(e){}}draw();overlay('GAME OVER','Score '+score+' · Tap or press SPACE to retry')}
+function loop(){if(!playing)return;frame++;bird.vy+=.27;bird.y+=bird.vy;bird.rot=Math.min(1,bird.vy*.08);skyShift+=.45;groundShift+=3.3;if(frame%92===1)addPipe();for(const p of pipes){p.x-=3.3;if(!p.passed&&p.x+62<bird.x){p.passed=true;score++;$('score').textContent=score;if(score>best){best=score;$('best').textContent=best;try{localStorage.setItem(store,String(best))}catch(e){}}}if(bird.x+bird.r>p.x-4&&bird.x-bird.r<p.x+68&&(bird.y-bird.r<p.top||bird.y+bird.r>p.top+p.gap)){finish();return}}pipes=pipes.filter(p=>p.x>-90);if(bird.y-bird.r<0||bird.y+bird.r>H-54){finish();return}draw();raf=requestAnimationFrame(loop)}
+c.addEventListener('pointerdown',e=>{e.preventDefault();flap()});$('start').addEventListener('click',flap);$('restart').addEventListener('click',start);window.addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){e.preventDefault();if(!e.repeat)flap()}});reset();
 })();
-</script>
-</body>
-</html>
-
+</script></body></html>
