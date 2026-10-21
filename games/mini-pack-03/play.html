@@ -25,9 +25,9 @@ if(id==='brickstorm'){for(let r=0;r<5;r++)for(let col=0;col<10;col++)bricks.push
 if(id==='puzzle-pulse'){let vals=['🍞','⭐','🚀','🐉','🍞','⭐','🚀','🐉','💎','🎮','💎','🎮'];vals.sort(()=>Math.random()-.5);tiles=vals.map((v,i)=>({v,x:180+(i%4)*112,y:65+Math.floor(i/4)*105,open:false,done:false}));}
 if(id==='dragon-trail'){player={x:400,y:225,w:18,h:18};trail=[{x:400,y:225},{x:382,y:225},{x:364,y:225}];spawnItem('gem');}
 if(id==='target-rush')spawnItem('target');
-if(['cosmic-defender','neon-drift','astro-run','galaxy-quest'].includes(id))for(let i=0;i<5;i++)spawnItem(id==='cosmic-defender'?'rock':id==='neon-drift'?'car':id==='astro-run'?'hazard':'meteor');
+if(id==='astro-run'){for(let i=0;i<4;i++)items.push({type:'hazard',x:W+100+i*210,y:H-85,r:17,w:30,h:30,speed:5});}else if(['cosmic-defender','neon-drift','galaxy-quest'].includes(id))for(let i=0;i<5;i++)spawnItem(id==='cosmic-defender'?'rock':id==='neon-drift'?'car':'meteor');
 scoreEl.textContent='0';statusEl.textContent='READY';draw();}
-function spawnItem(type){const x=45+Math.random()*(W-90);items.push({type,x,y:type==='car'? -80: type==='hazard'? -30:35+Math.random()*150,r:type==='target'?24:17,w:type==='car'?42:30,h:type==='car'?68:30,speed:2+Math.random()*2});}
+function spawnItem(type){const x=type==='hazard'?W+70+Math.random()*170:45+Math.random()*(W-90);const y=type==='car'?-80:type==='hazard'?H-85:35+Math.random()*150;items.push({type,x,y,r:type==='target'?24:17,w:type==='car'?42:30,h:type==='car'?68:30,speed:type==='hazard'?5:2+Math.random()*2});}
 function addScore(n=10){score+=n;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;localStorage.setItem(store,best);}}
 function end(){running=false;statusEl.textContent='GAME OVER';draw();ctx.fillStyle='#0009';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='white';ctx.font='bold 42px system-ui';ctx.fillText('GAME OVER',W/2,H/2-12);ctx.font='bold 22px system-ui';ctx.fillText('Score: '+score+'  •  Best: '+best,W/2,H/2+30);ctx.font='16px system-ui';ctx.fillText('Press START / RESTART to play again',W/2,H/2+65);}
 function background(){ctx.fillStyle='#080e1c';ctx.fillRect(0,0,W,H);for(let i=0;i<65;i++){let x=(i*127+frame*.12)%W,y=(i*67+frame*.3)%H;ctx.fillStyle=i%3?'#9cbce055':'#38bdf877';ctx.fillRect(x,y,2,2)}}
