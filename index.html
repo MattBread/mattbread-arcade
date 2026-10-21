@@ -147,6 +147,21 @@ h2 { font-size:30px; margin:8px 0; letter-spacing:-.7px; }
   grid-template-columns:repeat(3,minmax(0,1fr));
   gap:17px;
 }
+.pack-links {
+  width:100%;
+  max-width:1100px;
+  margin:22px auto 0;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:17px;
+}
+.pack-links .game-card { min-width:0; }
+@media (max-width:900px) {
+  .pack-links { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:600px) {
+  .pack-links { grid-template-columns:minmax(0,1fr); }
+}
 .game-card {
   min-width:0;
   background:linear-gradient(150deg,var(--panel2),var(--panel));
@@ -436,9 +451,11 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
       </article>
     </div>
     <p id="search-count" class="section-copy" aria-live="polite">32 games in the library.</p>
-    <div class="game-card" style="margin-top:22px"><span class="game-icon">🎮</span><h3>Mini Pack 02 — Games 11–20</h3><p>Ten more original games are ready to explore.</p><a class="play-link" href="games/mini-pack-02/index.html">EXPLORE PACK 02 ↗</a></div>
-    <div class="game-card" style="margin-top:16px"><span class="game-icon">🆕</span><h3>Mini Pack 03 — Games 21–30</h3><p>All ten Pack 03 games are playable, including Pong, SKYKING Flight, and eight original mini-games.</p><a class="play-link" href="games/mini-pack-03/index.html">EXPLORE PACK 03 ↗</a></div>
-    <div class="game-card" style="margin-top:16px"><span class="game-icon">🎯</span><h3>Mini Pack 04 — Games 31–40: Arcade Ops</h3><p>Ten original top-down arcade shooters with enemy waves, health, ammo, boss units, and high scores.</p><a class="play-link" href="games/mini-pack-04/index.html">EXPLORE PACK 04 ↗</a></div>
+    <section class="pack-links" aria-label="Explore game packs">
+      <div class="game-card"><span class="game-icon">🎮</span><h3>Mini Pack 02 — Games 11–20</h3><p>Ten more original games are ready to explore.</p><a class="play-link" href="games/mini-pack-02/index.html">EXPLORE PACK 02 ↗</a></div>
+      <div class="game-card"><span class="game-icon">🆕</span><h3>Mini Pack 03 — Games 21–30</h3><p>All ten Pack 03 games are playable, including Pong, SKYKING Flight, and eight original mini-games.</p><a class="play-link" href="games/mini-pack-03/index.html">EXPLORE PACK 03 ↗</a></div>
+      <div class="game-card"><span class="game-icon">🎯</span><h3>Mini Pack 04 — Games 31–40: Arcade Ops</h3><p>Ten original top-down arcade shooters with enemy waves, health, ammo, boss units, and high scores.</p><a class="play-link" href="games/mini-pack-04/index.html">EXPLORE PACK 04 ↗</a></div>
+    </section>
     <div class="empty-state" id="no-results" hidden><strong>No games found.</strong><p>Try another title or genre.</p></div>
   </section>
 
