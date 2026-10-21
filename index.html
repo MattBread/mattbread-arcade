@@ -133,6 +133,15 @@ h2 { font-size:30px; margin:8px 0; letter-spacing:-.7px; }
   outline:none;
 }
 .search:focus { border-color:var(--blue); }
+.library-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.library-controls .search { flex:1 1 230px; }
+.favorite-filter,.favorite-toggle {
+  color:var(--text); background:var(--panel2); border:1px solid var(--border);
+  border-radius:10px; padding:12px 14px; font-weight:800; cursor:pointer;
+}
+.favorite-filter.active,.favorite-toggle.is-favorite { color:#ffd166; border-color:#ffd166; background:rgba(255,209,102,.10); }
+.favorite-toggle { display:inline-block; margin:8px 0 0; padding:7px 10px; font-size:12px; }
+.favorite-filter:hover,.favorite-toggle:hover { border-color:var(--blue); }
 .game-grid {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
@@ -289,7 +298,10 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
         <h2>Game Library</h2>
         <p class="section-copy">Browse, search, and play the games in MattBread Arcade.</p>
       </div>
-      <input class="search" id="library-search" type="search" placeholder="Search games or genres…" aria-label="Search games or genres">
+      <div class="library-controls">
+        <input class="search" id="library-search" type="search" placeholder="Search games or genres…" aria-label="Search games or genres">
+        <button class="favorite-filter" id="favorites-filter" type="button" aria-pressed="false">☆ Favorites</button>
+      </div>
     </div>
 
     <!-- Cards are written directly in the HTML so they don't depend on JavaScript to appear. -->
@@ -424,6 +436,44 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
   const cards = Array.from(document.querySelectorAll("#library-games .game-card"));
   const count = document.getElementById("search-count");
   const noResults = document.getElementById("no-results");
+  const favoritesFilter = document.getElementById("favorites-filter");
+  const favoriteStorageKey = "mattbreadArcadeFavorites";
+  let favorites = new Set();
+  let favoritesOnly = false;
+  try {
+    const savedFavorites = JSON.parse(localStorage.getItem(favoriteStorageKey) || "[]");
+    if (Array.isArray(savedFavorites)) favorites = new Set(savedFavorites);
+  } catch (error) {
+    favorites = new Set();
+  }
+
+  function saveFavorites() {
+    try { localStorage.setItem(favoriteStorageKey, JSON.stringify(Array.from(favorites))); }
+    catch (error) { /* Favorites still work for this page session. */ }
+  }
+
+  function syncFavoriteButtons() {
+    document.querySelectorAll(".game-card").forEach(card => {
+      const key = card.dataset.title;
+      if (!key) return;
+      let button = card.querySelector(".favorite-toggle");
+      if (!button) {
+        button = document.createElement("button");
+        button.type = "button";
+        button.className = "favorite-toggle";
+        const heading = card.querySelector("h3");
+        if (heading) heading.insertAdjacentElement("afterend", button);
+      }
+      const selected = favorites.has(key);
+      button.classList.toggle("is-favorite", selected);
+      button.setAttribute("aria-pressed", String(selected));
+      button.setAttribute("aria-label", (selected ? "Remove " : "Add ") + key + (selected ? " from favorites" : " to favorites"));
+      button.textContent = selected ? "★ Favorited" : "☆ Add to favorites";
+    });
+    favoritesFilter.classList.toggle("active", favoritesOnly);
+    favoritesFilter.setAttribute("aria-pressed", String(favoritesOnly));
+    favoritesFilter.textContent = favoritesOnly ? "★ Showing Favorites" : "☆ Favorites";
+  }
 
   function showView(name) {
     views.forEach(view => {
@@ -447,7 +497,8 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
     let visible = 0;
 
     cards.forEach(card => {
-      const matches = card.dataset.title.includes(term) || (card.dataset.genre || "").includes(term);
+      const matchesSearch = card.dataset.title.includes(term) || (card.dataset.genre || "").includes(term);
+      const matches = matchesSearch && (!favoritesOnly || favorites.has(card.dataset.title));
       card.hidden = !matches;
       if (matches) visible++;
     });
@@ -457,6 +508,23 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
   }
 
   search.addEventListener("input", () => filterGames(search.value));
+  favoritesFilter.addEventListener("click", () => {
+    favoritesOnly = !favoritesOnly;
+    syncFavoriteButtons();
+    filterGames(search.value);
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest(".favorite-toggle");
+    if (!button) return;
+    const card = button.closest(".game-card");
+    const key = card && card.dataset.title;
+    if (!key) return;
+    if (favorites.has(key)) favorites.delete(key);
+    else favorites.add(key);
+    saveFavorites();
+    syncFavoriteButtons();
+    filterGames(search.value);
+  });
 
   const genres = [
     ["Action", "Fast-paced gameplay"],
@@ -523,6 +591,8 @@ footer { border-top:1px solid var(--border); padding:30px 0; }
     alphabet.appendChild(button);
   });
 
+  syncFavoriteButtons();
+  filterGames(search.value);
   document.getElementById("year").textContent = new Date().getFullYear();
 })();
 </script>
