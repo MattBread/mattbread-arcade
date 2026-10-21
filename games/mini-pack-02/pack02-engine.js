@@ -29,20 +29,33 @@ function blockdrop(){const cell=20,left=270,top=24;ctx.fillStyle="#111b2d";ctx.f
 function sea(){ctx.fillStyle="#0b4260";ctx.fillRect(0,0,W,H);for(let i=0;i<8;i++){ctx.strokeStyle="#16769a";ctx.beginPath();ctx.arc((i*127+frame*1.2)%W,70+i*42,40,0,Math.PI);ctx.stroke();}if(frame%40===0)items.push({x:30+Math.random()*730,y:40+Math.random()*350,t:Math.random()<.72?"pearl":"mine"});move(4);items.forEach(i=>{ctx.fillStyle=i.t==="pearl"?"#fde68a":"#fb7185";ctx.beginPath();ctx.arc(i.x,i.y,12,0,7);ctx.fill();if(hit(player,{...i,w:24,h:24})){if(i.t==="pearl")score+=10;else lives--;i.y=-100;}});items=items.filter(i=>i.y>-50);playerDraw("#a5f3fc");}
 function bubbles(){if(frame%18===0)items.push({x:25+Math.random()*750,y:H+20,t:"bubble",r:12+Math.random()*15,vy:1+Math.random()*2});items.forEach(i=>{i.y-=i.vy;ctx.fillStyle=["#38bdf8","#c084fc","#fb7185"][Math.floor(i.x)%3];ctx.beginPath();ctx.arc(i.x,i.y,i.r,0,7);ctx.fill();});items=items.filter(i=>{if(i.y< -30){lives--;return false;}return true;});text("TAP / CLICK BUBBLES",20,30,16);}
 function ninja(){
- // Scrolling ground and raised platforms create a simple platform-runner course.
+ // Make the platforms large, bright, and immediately reachable.
  ctx.fillStyle="#263449";ctx.fillRect(0,H-30,W,30);
  ctx.fillStyle="#354b65";ctx.fillRect(0,H-30,W,5);
- if(frame%65===0)items.push({x:W+20,y:H-55,t:"trap",w:25,h:25});
- ninjaPlatforms.forEach(p=>{p.x-=3.2;ctx.fillStyle="#334155";ctx.fillRect(p.x,p.y,p.w,p.h);ctx.fillStyle="#38bdf8";ctx.fillRect(p.x,p.y,p.w,4);ctx.fillStyle="#64748b";ctx.fillRect(p.x+8,p.y+p.h,p.w-16,5);});
+ if(frame%55===0)items.push({x:W+20,y:H-55,t:"trap",w:25,h:25});
+ // Scroll the course slowly so the platforms remain easy to see and reach.
+ ninjaPlatforms.forEach(p=>{
+   p.x-=1.8;
+   ctx.fillStyle="#334155";ctx.fillRect(p.x,p.y,p.w,p.h);
+   ctx.fillStyle="#22d3ee";ctx.fillRect(p.x,p.y,p.w,5);
+   ctx.fillStyle="#64748b";ctx.fillRect(p.x+8,p.y+p.h,p.w-16,5);
+ });
  ninjaPlatforms=ninjaPlatforms.filter(p=>p.x+p.w>0);
- if(frame%105===0)ninjaPlatforms.push({x:W+25,y:[265,300,330,350][Math.floor(Math.random()*4)],w:95+Math.random()*35,h:14});
+ if(frame%70===0)ninjaPlatforms.push({x:W+10,y:[270,300,325,345][Math.floor(Math.random()*4)],w:135,h:16});
  const previousBottom=player.y+player.h,previousY=player.y;
  player.vy=(player.vy||0)+.5;player.y+=player.vy;
  let landed=false;
- for(const p of ninjaPlatforms){if(player.vy>=0&&previousBottom<=p.y+2&&player.y+player.h>=p.y&&player.x+player.w>p.x+5&&player.x<p.x+p.w-5){player.y=p.y-player.h;player.vy=0;player.x-=3.2;landed=true;break;}}
+ for(const p of ninjaPlatforms){
+   if(player.vy>=0&&previousBottom<=p.y+4&&player.y+player.h>=p.y&&player.x+player.w>p.x+4&&player.x<p.x+p.w-4){
+     player.y=p.y-player.h;player.vy=0;player.x-=1.8;landed=true;break;
+   }
+ }
  if(!landed&&player.y+player.h>=H-30){player.y=H-30-player.h;player.vy=0;}
  if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-10;
- items.forEach(i=>{i.x-=5;ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();if(hit(player,i)){if(previousY+player.h<i.y+5){i.x=-100;score+=5;}else{lives--;i.x=-100;}}});
+ items.forEach(i=>{
+   i.x-=5;ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
+   if(hit(player,i)){if(previousY+player.h<i.y+5){i.x=-100;score+=5;}else{lives--;i.x=-100;}}
+ });
  items=items.filter(i=>i.x>-50);
  score+=frame%35===0?1:0;playerDraw("#a78bfa");text("JUMP BETWEEN PLATFORMS · DODGE TRAPS",20,30,16);
 }
