@@ -67,7 +67,7 @@ function drawNinjaBackground(world,levelInWorld,elapsed,color){
  let seed=ninjaLevel*9817+world*71+levelInWorld*313;const rand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
  // Level-specific stars and atmospheric beams.
  ctx.globalAlpha=.1;ctx.fillStyle=s.accent;for(let i=0;i<5;i++){const x=((i*197+levelInWorld*71+world*43-elapsed*.18)%(W+160))-80;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+60,0);ctx.lineTo(x+190,H-54);ctx.lineTo(x+130,H-54);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;
- for(let i=0;i<65;i++){const x=rand()*W,y=rand()*(H-85),r=.5+rand()*1.7;ctx.globalAlpha=.25+rand()*.55;ctx.fillStyle=i%5===0?s.accent:"#fff";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+ for(let i=0;i<24;i++){const x=rand()*W,y=rand()*(H-85),r=.5+rand()*1.7;ctx.globalAlpha=.25+rand()*.55;ctx.fillStyle=i%5===0?s.accent:"#fff";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
  const drift=elapsed*(.25+world*.025);
  if(world===0){ // Cyber City: layered towers and neon windows
   for(let l=0;l<3;l++)for(let i=0;i<13;i++){const bw=32+(i*17+v*13)%31,bh=60+(i*41+levelInWorld*19+l*37)%150,x=i*72-((drift*(l+1))%72),y=H-54-bh;ctx.fillStyle=["#061326","#09213c","#0b3150"][l];ctx.fillRect(x,y,bw,bh);ctx.strokeStyle=s.accent;ctx.globalAlpha=.4;ctx.strokeRect(x+3,y+3,bw-6,bh-6);for(let wy=y+12;wy<H-64;wy+=17)for(let wx=x+8;wx<x+bw-5;wx+=12){ctx.globalAlpha=rand()>.25?.8:.12;ctx.fillStyle=rand()>.5?s.accent:"#7dd3fc";ctx.fillRect(wx,wy,4,6);}}ctx.globalAlpha=1;
@@ -77,8 +77,26 @@ function drawNinjaBackground(world,levelInWorld,elapsed,color){
   for(let i=0;i<7;i++){const x=i*140-((drift*.8)%140),y=H-54-(i%3)*17;ctx.fillStyle=["#e84eaa","#8b5cf6","#fb7185"][i%3];ctx.beginPath();ctx.ellipse(x+65,y,85,43,0,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle="#fff0f8";ctx.fillRect(x+62,y-60,6,25);ctx.fillStyle=["#f9a8d4","#f0abfc","#fda4af"][i%3];ctx.beginPath();ctx.arc(x+65,y-65,22,0,Math.PI*2);ctx.fill();}ctx.strokeStyle="#fff0f8";ctx.lineWidth=5;for(let i=0;i<4;i++){const x=i*230-((drift*.5)%230);ctx.beginPath();ctx.arc(x+90,H-70,48,Math.PI,Math.PI*2);ctx.stroke();}
  }else if(world===3){ // Frostbyte: icy peaks and falling snow
   for(let i=0;i<9;i++){const x=i*110-((drift*.4)%110),peak=H-95-(i*31+v*13)%90;ctx.fillStyle=i%2?"#23678c":"#4b91b5";ctx.beginPath();ctx.moveTo(x,H-54);ctx.lineTo(x+50,peak);ctx.lineTo(x+105,H-54);ctx.closePath();ctx.fill();ctx.fillStyle="#e0f7ff";ctx.beginPath();ctx.moveTo(x+38,peak+25);ctx.lineTo(x+50,peak);ctx.lineTo(x+65,peak+28);ctx.closePath();ctx.fill();}for(let i=0;i<35;i++){const x=(i*71+v*29+Math.sin(elapsed*.02+i)*12)%W,y=(i*43+elapsed*(.7+i%3*.3))%(H-65);ctx.fillStyle="#e0f7ff";ctx.globalAlpha=.7;ctx.fillRect(x,y,2,5);}ctx.globalAlpha=1;
- }else if(world===4){ // Lava Grid: volcanic ridges, lava flow and embers
-  ctx.fillStyle="#351017";ctx.beginPath();ctx.moveTo(0,H-54);for(let x=0;x<=W;x+=80)ctx.lineTo(x,H-100-((x/80*31+v*17)%65));ctx.lineTo(W,H-54);ctx.fill();ctx.fillStyle="#ff5722";ctx.beginPath();ctx.moveTo(250,H-100);ctx.lineTo(370,H-245-v*7);ctx.lineTo(500,H-100);ctx.closePath();ctx.fill();ctx.fillStyle="#ffb347";ctx.beginPath();ctx.moveTo(350,H-170);ctx.lineTo(370,H-245-v*7);ctx.lineTo(390,H-170);ctx.closePath();ctx.fill();for(let i=0;i<25;i++){const x=(i*67+v*37-elapsed*(1+i%3*.5)+W*3)%W,y=(i*31-elapsed*1.4+H*4)%(H-60);ctx.globalAlpha=.65;ctx.fillStyle=i%2?"#ffb347":"#ff4d24";ctx.fillRect(x,y,3,5);}ctx.globalAlpha=1;
+ }else if(world===4){ // Lava Grid: clear volcano silhouettes, crater rims and lava rivers
+  // Layered volcanoes; the notched summits and dark crater bowls make them read as volcanoes.
+  for(let i=0;i<7;i++){
+   const x=i*145-((drift*.22)%145),base=H-54,peak=base-(105+(i*31+v*13)%65),w=118+(i%3)*12;
+   ctx.fillStyle=i%2?"#351017":"#48151a";ctx.beginPath();ctx.moveTo(x-w/2,base);ctx.lineTo(x-w*.22,peak+28);ctx.lineTo(x-18,peak+10);ctx.lineTo(x-7,peak+24);ctx.lineTo(x+8,peak+24);ctx.lineTo(x+22,peak+8);ctx.lineTo(x+w/2,base);ctx.closePath();ctx.fill();
+   ctx.fillStyle="#10070a";ctx.beginPath();ctx.moveTo(x-25,peak+29);ctx.lineTo(x-18,peak+10);ctx.lineTo(x-7,peak+24);ctx.lineTo(x+8,peak+24);ctx.lineTo(x+22,peak+8);ctx.lineTo(x+28,peak+30);ctx.closePath();ctx.fill();
+   ctx.strokeStyle="#ff5722";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-18,peak+11);ctx.lineTo(x-7,peak+25);ctx.lineTo(x+8,peak+25);ctx.lineTo(x+22,peak+9);ctx.stroke();
+  }
+  // Large foreground volcano with a broad crater and two bright lava channels.
+  const cx=390,base=H-54,peak=base-(205+v*5);
+  ctx.fillStyle="#240b10";ctx.beginPath();ctx.moveTo(185,base);ctx.lineTo(270,peak+50);ctx.lineTo(318,peak+8);ctx.lineTo(345,peak+31);ctx.lineTo(390,peak+20);ctx.lineTo(431,peak+32);ctx.lineTo(466,peak+7);ctx.lineTo(520,peak+48);ctx.lineTo(595,base);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#10070a";ctx.beginPath();ctx.moveTo(315,peak+48);ctx.lineTo(318,peak+8);ctx.lineTo(345,peak+31);ctx.lineTo(390,peak+20);ctx.lineTo(431,peak+32);ctx.lineTo(466,peak+7);ctx.lineTo(475,peak+48);ctx.lineTo(435,peak+62);ctx.lineTo(355,peak+62);ctx.closePath();ctx.fill();
+  ctx.strokeStyle="#ff5722";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(318,peak+8);ctx.lineTo(345,peak+31);ctx.lineTo(390,peak+20);ctx.lineTo(431,peak+32);ctx.lineTo(466,peak+7);ctx.stroke();
+  ctx.fillStyle="#ffb347";ctx.beginPath();ctx.ellipse(cx,peak+48,37,8,0,0,Math.PI*2);ctx.fill();
+  ctx.lineCap="round";ctx.strokeStyle="#ff4b22";ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(326,peak+42);ctx.lineTo(304,peak+78);ctx.lineTo(315,peak+112);ctx.lineTo(274,base-8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(455,peak+42);ctx.lineTo(478,peak+78);ctx.lineTo(462,peak+112);ctx.lineTo(510,base-8);ctx.stroke();
+  ctx.strokeStyle="#ffb347";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(326,peak+42);ctx.lineTo(304,peak+78);ctx.lineTo(315,peak+112);ctx.lineTo(274,base-8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(455,peak+42);ctx.lineTo(478,peak+78);ctx.lineTo(462,peak+112);ctx.lineTo(510,base-8);ctx.stroke();
+  // Keep the eruption subtle and inexpensive to render.
+  for(let i=0;i<10;i++){const x=cx-25+((i*17+elapsed*.35)%50),y=peak-12-((i*23+elapsed*.8)%45);ctx.globalAlpha=.65;ctx.fillStyle=i%3?"#ff5722":"#ffd166";ctx.fillRect(x,y,3,4);}ctx.globalAlpha=1;ctx.lineCap="butt";
  }else if(world===5){ // Sky Temple: clouds, islands and temple columns
   for(let i=0;i<8;i++){const x=i*125-((drift*.45)%125),y=100+(i*37+v*19)%100;ctx.globalAlpha=.6;ctx.fillStyle="#d8efff";ctx.beginPath();ctx.ellipse(x+35,y,43,13,0,0,Math.PI*2);ctx.ellipse(x+60,y-8,28,18,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.8;ctx.fillStyle="#426e9a";ctx.fillRect(x+30,H-119-(i%3)*20,14,65+(i%3)*20);ctx.fillRect(x+20,H-120-(i%3)*20,34,8);}ctx.fillStyle="#e2d4a5";ctx.fillRect(520,H-220,20,100);ctx.fillRect(575,H-220,20,100);ctx.fillRect(505,H-230,105,12);ctx.globalAlpha=1;
  }else if(world===6){ // Toxic Tunnel: cavern ceiling, vines and glowing pools
