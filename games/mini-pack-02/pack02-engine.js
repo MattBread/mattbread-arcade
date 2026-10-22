@@ -77,14 +77,19 @@ function drawNinjaBackground(world,levelInWorld,elapsed,color){
   for(let l=0;l<3;l++)for(let i=0;i<13;i++){const bw=32+(i*17+v*13)%31,bh=60+(i*41+levelInWorld*19+l*37)%150,x=i*72-((drift*(l+1))%72),y=H-54-bh;ctx.fillStyle=["#061326","#09213c","#0b3150"][l];ctx.fillRect(x,y,bw,bh);ctx.strokeStyle=s.accent;ctx.globalAlpha=.4;ctx.strokeRect(x+3,y+3,bw-6,bh-6);for(let wy=y+12;wy<H-64;wy+=17)for(let wx=x+8;wx<x+bw-5;wx+=12){ctx.globalAlpha=rand()>.25?.8:.12;ctx.fillStyle=rand()>.5?s.accent:"#7dd3fc";ctx.fillRect(wx,wy,4,6);}}ctx.globalAlpha=1;
  }else if(world===1){ // Violet Void: planet, ring and floating ruins
   ctx.globalAlpha=.7;ctx.fillStyle="#8b5cf6";ctx.beginPath();ctx.arc(620-v*35,125+(levelInWorld%3)*12,55+v*4,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#e9d5ff";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(620-v*35,125+(levelInWorld%3)*12,85,20,-.25,0,Math.PI*2);ctx.stroke();for(let i=0;i<7;i++){const x=i*135-((drift*.7)%135),bh=55+(i*19%55);ctx.fillStyle=i%2?"#482477":"#261343";ctx.fillRect(x,H-54-bh,70,bh);ctx.fillStyle=s.accent;ctx.fillRect(x+15,H-90,5,22);}ctx.globalAlpha=1;
- }else if(world===2){ // Candy Circuit: candy hills, lollipops, arches and animated fireworks
+ }else if(world===2){ // Candy Circuit: candy hills, lollipops, arches and flying candy
   for(let i=0;i<7;i++){const x=i*140-((drift*.8)%140),y=H-54-(i%3)*17;ctx.fillStyle=["#e84eaa","#8b5cf6","#fb7185"][i%3];ctx.beginPath();ctx.ellipse(x+65,y,85,43,0,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle="#fff0f8";ctx.fillRect(x+62,y-60,6,25);ctx.fillStyle=["#f9a8d4","#f0abfc","#fda4af"][i%3];ctx.beginPath();ctx.arc(x+65,y-65,22,0,Math.PI*2);ctx.fill();}
   ctx.strokeStyle="#fff0f8";ctx.lineWidth=5;for(let i=0;i<4;i++){const x=i*230-((drift*.5)%230);ctx.beginPath();ctx.arc(x+90,H-70,48,Math.PI,Math.PI*2);ctx.stroke();}
-  // Lightweight looping fireworks: fixed burst positions and deterministic spark motion.
-  const fireworkColors=["#ff4d9d","#ffd166","#00e5ff","#c084fc","#a3ff4f","#ffffff"];
-  for(let b=0;b<5;b++){
-   const cycle=elapsed/42+b*.217,phase=cycle-Math.floor(cycle),cx=85+((b*157+Math.floor(cycle)*83)%630),cy=48+((b*47+Math.floor(cycle)*29)%115),radius=phase*42,fade=1-phase;
-   if(phase<.82){for(let p=0;p<12;p++){const a=p*Math.PI/6+((b%3)*.12),dist=radius*(.72+((p%3)*.14)),px=cx+Math.cos(a)*dist,py=cy+Math.sin(a)*dist+phase*phase*24;ctx.globalAlpha=fade;ctx.fillStyle=fireworkColors[(p+b)%fireworkColors.length];ctx.beginPath();ctx.arc(px,py,1.2+(1-phase)*1.2,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;}
+  // Candy drifts and spins across the sky on looping paths.
+  for(let i=0;i<13;i++){
+   const x=((i*83+elapsed*(.45+(i%4)*.16))%(W+50))-25;
+   const y=35+(i*47+Math.sin(elapsed*.025+i*1.7)*19)%(H-125);
+   const spin=elapsed*.035+i;
+   ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(spin)*.55);
+   if(i%3===0){ctx.fillStyle="#ff6eb4";ctx.fillRect(-11,-7,22,14);ctx.fillStyle="#ffd7ec";ctx.beginPath();ctx.moveTo(-11,-7);ctx.lineTo(-18,-12);ctx.lineTo(-17,0);ctx.lineTo(-11,7);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(11,-7);ctx.lineTo(18,-12);ctx.lineTo(17,0);ctx.lineTo(11,7);ctx.closePath();ctx.fill();ctx.fillStyle="#fff";ctx.fillRect(-5,-5,3,10);}
+   else if(i%3===1){ctx.fillStyle="#fcd34d";ctx.beginPath();ctx.ellipse(0,0,10,7,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fff7b2";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-5,-4);ctx.lineTo(5,4);ctx.moveTo(-8,0);ctx.lineTo(1,6);ctx.stroke();}
+   else{ctx.strokeStyle="#7cf7ff";ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*1.65);ctx.stroke();ctx.fillStyle="#ff8bd1";ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();}
+   ctx.restore();
   }
  }else if(world===3){ // Frostbyte: icy peaks and falling snow
   for(let i=0;i<9;i++){const x=i*110-((drift*.4)%110),peak=H-95-(i*31+v*13)%90;ctx.fillStyle=i%2?"#23678c":"#4b91b5";ctx.beginPath();ctx.moveTo(x,H-54);ctx.lineTo(x+50,peak);ctx.lineTo(x+105,H-54);ctx.closePath();ctx.fill();ctx.fillStyle="#e0f7ff";ctx.beginPath();ctx.moveTo(x+38,peak+25);ctx.lineTo(x+50,peak);ctx.lineTo(x+65,peak+28);ctx.closePath();ctx.fill();}for(let i=0;i<35;i++){const x=(i*71+v*29+Math.sin(elapsed*.02+i)*12)%W,y=(i*43+elapsed*(.7+i%3*.3))%(H-65);ctx.fillStyle="#e0f7ff";ctx.globalAlpha=.7;ctx.fillRect(x,y,2,5);}ctx.globalAlpha=1;
