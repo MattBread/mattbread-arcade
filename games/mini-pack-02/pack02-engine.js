@@ -67,14 +67,15 @@ function ninja(){
  if(grounded&&!ninjaWasGrounded)ninjaRotation=Math.round(ninjaRotation/(Math.PI/2))*(Math.PI/2);
  ninjaWasGrounded=grounded;
  if((keys[" "]||keys.ArrowUp||keys.w)&&grounded){player.vy=-12.4;ninjaWasGrounded=false;}
+ let crashedThisFrame=false;
  items.forEach(i=>{
    i.x-=speed;
    ctx.save();ctx.shadowBlur=15;ctx.shadowColor="#ff367f";ctx.fillStyle="#ff367f";
    ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
    ctx.shadowBlur=0;ctx.fillStyle="#ffd2e4";ctx.fillRect(i.x+i.w/2-2,i.y+8,4,i.h-8);ctx.restore();
    const overlap=player.x+player.w-5>i.x+5&&player.x+5<i.x+i.w-5&&player.y+player.h-4>i.y+5&&player.y+4<i.y+i.h;
-   if(overlap&&running){
-     lives--;items=[];player.y=ground-player.h;player.vy=0;ninjaLevelStart=frame;ninjaSpawnIndex=0;ninjaRotation=0;ninjaWasGrounded=true;
+   if(overlap&&running&&!crashedThisFrame){
+     crashedThisFrame=true;lives--;items=[];player.y=ground-player.h;player.vy=0;ninjaLevelStart=frame;ninjaSpawnIndex=0;ninjaRotation=0;ninjaWasGrounded=true;
      if(lives<=0){running=false;over=true;ctx.fillStyle="rgba(4,8,20,.9)";ctx.fillRect(0,0,W,H);text("CRASH!",W/2-62,H/2-8,36,"#ff4d9d");text("Press RESTART to retry "+levelNames[ninjaLevel-1],W/2-190,H/2+28,16);return;}
    }
  });
