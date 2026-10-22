@@ -32,7 +32,12 @@ function ninja(){
  // Make the platforms large, bright, and immediately reachable.
  ctx.fillStyle="#263449";ctx.fillRect(0,H-30,W,30);
  ctx.fillStyle="#354b65";ctx.fillRect(0,H-30,W,5);
- if(frame%55===0)items.push({x:W+20,y:H-55,t:"trap",w:25,h:25});
+ // Spawn a readable mix of ground spikes and low barriers to jump over.
+ if(frame%100===0){
+   const kind=Math.random()<.65?"spike":"barrier";
+   items.push({x:W+20,y:H-55,t:kind,w:kind==="spike"?28:34,h:kind==="spike"?25:32});
+   if(Math.random()<.28)items.push({x:W+72,y:H-55,t:"spike",w:28,h:25});
+ }
  // Scroll the course slowly so the platforms remain easy to see and reach.
  ninjaPlatforms.forEach(p=>{
    p.x-=1.2;
@@ -57,8 +62,19 @@ function ninja(){
  if(!landed&&player.y+player.h>=H-30){player.y=H-30-player.h;player.vy=0;}
  if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-13;
  items.forEach(i=>{
-   i.x-=5;ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
-   if(hit(player,i)){if(previousY+player.h<i.y+5){i.x=-100;score+=5;}else{lives--;i.x=-100;}}
+   i.x-=4.5;
+   if(i.t==="barrier"){
+     ctx.fillStyle="#f97316";ctx.fillRect(i.x,i.y,i.w,i.h);
+     ctx.fillStyle="#fed7aa";ctx.fillRect(i.x+5,i.y+5,i.w-10,5);
+     ctx.fillStyle="#9a3412";ctx.fillRect(i.x+5,i.y+i.h-5,i.w-10,5);
+   }else{
+     ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
+     ctx.fillStyle="#fecdd3";ctx.fillRect(i.x+i.w/2-2,i.y+8,4,i.h-8);
+   }
+   if(hit(player,i)){
+     if(previousY+player.h<i.y+5&&player.vy>0){i.x=-100;score+=5;}
+     else{lives--;i.x=-100;}
+   }
  });
  items=items.filter(i=>i.x>-50);
  score+=frame%35===0?1:0;playerDraw("#a78bfa");text("JUMP BETWEEN PLATFORMS · DODGE TRAPS",20,30,16);
