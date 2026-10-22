@@ -38,7 +38,7 @@ function drawNinjaSelect(){
  text("NEON DASH",W/2-100,35,28,"#ffffff");text("100 LEVELS · 10 WORLDS",W/2-130,61,15,"#9fb5e8");
  const cols=10,cellW=59,cellH=27,gap=8,startX=35,startY=100;
  for(let w=0;w<10;w++){
-   const first=w*10+1;color=ninjaColors[w];
+   const first=w*10+1,color=ninjaColors[w];
    ctx.fillStyle=color;ctx.font="bold 11px system-ui";ctx.fillText("WORLD "+(w+1)+" · "+ninjaWorlds[w],startX,startY+w*34-7);
    for(let j=0;j<10;j++){
      const level=first+j,x=startX+j*(cellW+gap),y=startY+w*34;
