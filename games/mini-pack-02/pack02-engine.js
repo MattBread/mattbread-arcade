@@ -50,6 +50,7 @@ function drawNinjaSelect(){
  ctx.textAlign="left";text("Click any unlocked level to play",35,455-14,13,"#c7d2fe");
 }
 function startNinjaLevel(level){
+ const nextButton=document.getElementById("nextLevel");if(nextButton)nextButton.style.display="none";
  loadNinjaProgress();if(level<1||level>ninjaUnlocked)return;
  ninjaLevel=level;ninjaLevelStart=frame=0;ninjaSpawnIndex=0;ninjaRotation=0;ninjaWasGrounded=true;score=0;lives=3;items=[];player={x:145,y:H-54-30,w:30,h:30,vx:0,vy:0};ninjaScreen="play";running=true;over=false;requestAnimationFrame(loop);
 }
@@ -90,7 +91,7 @@ function ninja(){
  if(elapsed>=target){
    running=false;over=true;ninjaScreen="complete";
    if(ninjaLevel>=ninjaUnlocked&&ninjaUnlocked<100){ninjaUnlocked=ninjaLevel+1;try{localStorage.setItem("neonDashUnlocked",String(ninjaUnlocked));}catch(e){}}
-   ctx.fillStyle="rgba(4,8,20,.92)";ctx.fillRect(0,0,W,H);ctx.textAlign="center";text("LEVEL "+ninjaLevel+" CLEARED!",W/2-150,H/2-20,27,"#a3ff4f");text(ninjaLevel<100?"Level "+(ninjaLevel+1)+" unlocked!":"ALL 100 LEVELS COMPLETE!",W/2,H/2+15,16,color);text("Click to continue to level select",W/2,H/2+48,14,"#ffffff");ctx.textAlign="left";
+   ctx.fillStyle="rgba(4,8,20,.92)";ctx.fillRect(0,0,W,H);ctx.textAlign="center";text("LEVEL "+ninjaLevel+" CLEARED!",W/2-150,H/2-20,27,"#a3ff4f");text(ninjaLevel<100?"Level "+(ninjaLevel+1)+" unlocked!":"ALL 100 LEVELS COMPLETE!",W/2,H/2+15,16,color);text(ninjaLevel<100?"Use NEXT LEVEL below to continue":"You completed every level!",W/2,H/2+48,14,"#ffffff");const nextButton=document.getElementById("nextLevel");if(nextButton)nextButton.style.display=ninjaLevel<100?"inline-block":"none";ctx.textAlign="left";
  }
 }
 function whack(){
@@ -134,5 +135,6 @@ function whack(){
 let pointerDown=false;canvas.addEventListener("pointerdown",e=>{pointerDown=true;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;if(name==="ninja-dash"){if(ninjaScreen==="select"){const cellW=59,cellH=27,gap=8,startX=35,startY=100;if(y>=startY-5&&y<startY+10*34){const row=Math.floor((y-startY)/34),col=Math.floor((x-startX)/(cellW+gap));if(row>=0&&row<10&&col>=0&&col<10){const level=row*10+col+1;if(level<=ninjaUnlocked)startNinjaLevel(level);}}}else if(ninjaScreen==="complete"){drawNinjaSelect();document.getElementById("status").textContent="Choose an unlocked level · "+ninjaUnlocked+"/100 unlocked";}else if(ninjaScreen==="failed"){startNinjaLevel(ninjaLevel);}else if(player.vy===0){player.vy=-12.4;}return;}if(name==="bubble-burst"){items=items.filter(i=>{if(Math.hypot(i.x-x,i.y-y)<i.r+8){score+=10;return false;}return true;});}if(name==="whack-a-bot"&&items.some(i=>Math.hypot(i.x-x,i.y-y)<42)){score+=10;items=[];nextBotFrame=frame+Math.floor(45+Math.random()*25);}if(name==="pixel-jumper"){if(player.vy===0)player.vy=-10;}if(name==="neon-pinball"){ball.vy=-Math.abs(ball.vy)-1;score++;}});canvas.addEventListener("pointerup",()=>pointerDown=false);
 function move(speed){if(keys.ArrowLeft||keys.a)player.x-=speed;if(keys.ArrowRight||keys.d)player.x+=speed;if(keys.ArrowUp||keys.w)player.y-=speed;if(keys.ArrowDown||keys.s)player.y+=speed;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(35,Math.min(H-player.h,player.y));}
 document.addEventListener("keydown",e=>{keys[e.key]=true;if([" ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key))e.preventDefault();if(name==="block-drop"&&e.key==="ArrowUp"){e.preventDefault();const rotated=player.shape[0].map((_,i)=>player.shape.map(row=>row[i]).reverse());if(!blockCollision(rotated,player.x,player.y))player.shape=rotated;}if(name==="block-drop"&&e.code==="Space"){e.preventDefault();hardDrop();}});document.addEventListener("keyup",e=>keys[e.key]=false);
+document.getElementById("nextLevel").addEventListener("click",()=>{if(name==="ninja-dash"&&ninjaScreen==="complete"&&ninjaLevel<100)startNinjaLevel(ninjaLevel+1);});
 document.getElementById("restart").addEventListener("click",()=>{if(name==="ninja-dash"){if(ninjaScreen==="failed"){startNinjaLevel(ninjaLevel);}else{loadNinjaProgress();drawNinjaSelect();document.getElementById("status").textContent="Choose an unlocked level · "+ninjaUnlocked+"/100 unlocked";}}else reset();});reset();
 })();
