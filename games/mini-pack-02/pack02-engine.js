@@ -50,39 +50,48 @@ function drawNinjaSelect(){
  ctx.textAlign="left";text("Click any unlocked level to play",35,455-14,13,"#c7d2fe");
 }
 function drawNinjaBackground(world,levelInWorld,elapsed,color){
- const palettes=[
-  [["#06152b","#123b65"],["#170b2e","#42145d"],["#071f28","#14514d"],["#10132c","#34356b"],["#24101e","#64243e"]],
-  [["#080b22","#30205d"],["#130d2a","#4c2370"],["#061a31","#124a75"],["#1a0928","#612b76"],["#0b1230","#252b66"]],
-  [["#28102b","#783052"],["#241029","#a13f68"],["#301323","#783b3b"],["#20102d","#563a78"],["#351229","#9a3c52"]],
-  [["#041b32","#146078"],["#09243a","#377d9a"],["#10233d","#456e9c"],["#071b30","#1d5b80"],["#0b2439","#5294a8"]],
-  [["#260b13","#7c251d"],["#35120c","#a34720"],["#28100d","#61241f"],["#31150a","#8b4a16"],["#220d19","#73304b"]],
-  [["#071d32","#24618a"],["#0b1935","#3a4e88"],["#102644","#4a75a0"],["#101c38","#596ba3"],["#071f3a","#287b9a"]],
-  [["#142009","#3b5720"],["#0b2119","#1f6545"],["#1b2608","#526a1d"],["#10271f","#26735b"],["#20230a","#68782a"]],
-  [["#100d31","#4b357b"],["#11143a","#315ca0"],["#1b0e35","#793f8b"],["#071c3b","#276ca1"],["#171238","#6750a0"]],
-  [["#180923","#6b1e70"],["#0b1230","#4d286c"],["#1a0b29","#7b255d"],["#091c31","#1e6680"],["#211033","#5c367b"]],
-  [["#020816","#26304c"],["#100b25","#4c255e"],["#17101d","#623044"],["#06172a","#1d5272"],["#100e2c","#5a4b83"]]
+ const scenes=[
+  {sky:["#020817","#112f58"],accent:"#00e5ff"},
+  {sky:["#08041c","#35115c"],accent:"#c084fc"},
+  {sky:["#260b30","#7d2d63"],accent:"#ff83d5"},
+  {sky:["#041c34","#3b8ab0"],accent:"#a5f3fc"},
+  {sky:["#1b0508","#782313"],accent:"#ff6b35"},
+  {sky:["#092344","#66a9d8"],accent:"#fef08a"},
+  {sky:["#071b0d","#315b22"],accent:"#a3e635"},
+  {sky:["#05051b","#29245b"],accent:"#ffd166"},
+  {sky:["#10051e","#4b164f"],accent:"#ff4fd8"},
+  {sky:["#030610","#252943"],accent:"#ffffff"}
  ];
- const variants=palettes[world][(levelInWorld-1)%5];
- const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,variants[0]);grad.addColorStop(1,variants[1]);ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
- // A unique constellation/sky pattern for each level.
- let seed=ninjaLevel*7919+levelInWorld*101;
- const rand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
- for(let i=0;i<42;i++){const x=rand()*W,y=rand()*(H-90),r=.7+rand()*1.8;ctx.globalAlpha=.25+rand()*.6;ctx.fillStyle=i%4===0?color:"#e5f3ff";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
- ctx.globalAlpha=1;
- const style=world;
- if(style===0||style===1||style===7||style===8||style===9){
-   // Neon city / towers / alien skyline.
-   for(let i=0;i<15;i++){const bw=25+((i*19+levelInWorld*7)%35),bh=55+((i*43+levelInWorld*23+world*13)%145),x=i*58-((elapsed*1.1)%58);ctx.fillStyle=i%2?variants[0]:variants[1];ctx.globalAlpha=.8;ctx.fillRect(x,H-54-bh,bw,bh);ctx.globalAlpha=.65;ctx.fillStyle=color;for(let wy=H-54-bh+10;wy<H-64;wy+=15)for(let wx=x+6;wx<x+bw-4;wx+=12)if((wx+wy+i)%3<2)ctx.fillRect(wx,wy,4,6);}
- }else if(style===2||style===4||style===6){
-   // Candy hills, volcanic ridges, or toxic overgrowth.
-   for(let i=0;i<6;i++){const x=i*165-((elapsed*.55)%165);ctx.globalAlpha=.45;ctx.fillStyle=i%2?variants[1]:color;ctx.beginPath();ctx.ellipse(x+80,H-55,110,45+(i%3)*12,0,Math.PI,Math.PI*2);ctx.fill();}
- }else{
-   // Frozen cliffs / sky temples / drifting planetary ridges.
-   for(let i=0;i<7;i++){const x=i*135-((elapsed*.35)%135);ctx.globalAlpha=.5;ctx.fillStyle=i%2?color:variants[1];ctx.beginPath();ctx.moveTo(x,H-54);ctx.lineTo(x+45,H-130-(i*17+levelInWorld*9)%55);ctx.lineTo(x+100,H-54);ctx.closePath();ctx.fill();}
+ const s=scenes[world],v=(levelInWorld-1)%5;
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,s.sky[0]);g.addColorStop(.7,s.sky[1]);g.addColorStop(1,"#080b18");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ let seed=ninjaLevel*9817+world*71+levelInWorld*313;const rand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+ // Level-specific stars and atmospheric beams.
+ ctx.globalAlpha=.1;ctx.fillStyle=s.accent;for(let i=0;i<5;i++){const x=((i*197+levelInWorld*71+world*43-elapsed*.18)%(W+160))-80;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+60,0);ctx.lineTo(x+190,H-54);ctx.lineTo(x+130,H-54);ctx.closePath();ctx.fill();}ctx.globalAlpha=1;
+ for(let i=0;i<65;i++){const x=rand()*W,y=rand()*(H-85),r=.5+rand()*1.7;ctx.globalAlpha=.25+rand()*.55;ctx.fillStyle=i%5===0?s.accent:"#fff";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+ const drift=elapsed*(.25+world*.025);
+ if(world===0){ // Cyber City: layered towers and neon windows
+  for(let l=0;l<3;l++)for(let i=0;i<13;i++){const bw=32+(i*17+v*13)%31,bh=60+(i*41+levelInWorld*19+l*37)%150,x=i*72-((drift*(l+1))%72),y=H-54-bh;ctx.fillStyle=["#061326","#09213c","#0b3150"][l];ctx.fillRect(x,y,bw,bh);ctx.strokeStyle=s.accent;ctx.globalAlpha=.4;ctx.strokeRect(x+3,y+3,bw-6,bh-6);for(let wy=y+12;wy<H-64;wy+=17)for(let wx=x+8;wx<x+bw-5;wx+=12){ctx.globalAlpha=rand()>.25?.8:.12;ctx.fillStyle=rand()>.5?s.accent:"#7dd3fc";ctx.fillRect(wx,wy,4,6);}}ctx.globalAlpha=1;
+ }else if(world===1){ // Violet Void: planet, ring and floating ruins
+  ctx.globalAlpha=.7;ctx.fillStyle="#8b5cf6";ctx.beginPath();ctx.arc(620-v*35,125+(levelInWorld%3)*12,55+v*4,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#e9d5ff";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(620-v*35,125+(levelInWorld%3)*12,85,20,-.25,0,Math.PI*2);ctx.stroke();for(let i=0;i<7;i++){const x=i*135-((drift*.7)%135),bh=55+(i*19%55);ctx.fillStyle=i%2?"#482477":"#261343";ctx.fillRect(x,H-54-bh,70,bh);ctx.fillStyle=s.accent;ctx.fillRect(x+15,H-90,5,22);}ctx.globalAlpha=1;
+ }else if(world===2){ // Candy Circuit: candy hills, lollipops and arches
+  for(let i=0;i<7;i++){const x=i*140-((drift*.8)%140),y=H-54-(i%3)*17;ctx.fillStyle=["#e84eaa","#8b5cf6","#fb7185"][i%3];ctx.beginPath();ctx.ellipse(x+65,y,85,43,0,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle="#fff0f8";ctx.fillRect(x+62,y-60,6,25);ctx.fillStyle=["#f9a8d4","#f0abfc","#fda4af"][i%3];ctx.beginPath();ctx.arc(x+65,y-65,22,0,Math.PI*2);ctx.fill();}ctx.strokeStyle="#fff0f8";ctx.lineWidth=5;for(let i=0;i<4;i++){const x=i*230-((drift*.5)%230);ctx.beginPath();ctx.arc(x+90,H-70,48,Math.PI,Math.PI*2);ctx.stroke();}
+ }else if(world===3){ // Frostbyte: icy peaks and falling snow
+  for(let i=0;i<9;i++){const x=i*110-((drift*.4)%110),peak=H-95-(i*31+v*13)%90;ctx.fillStyle=i%2?"#23678c":"#4b91b5";ctx.beginPath();ctx.moveTo(x,H-54);ctx.lineTo(x+50,peak);ctx.lineTo(x+105,H-54);ctx.closePath();ctx.fill();ctx.fillStyle="#e0f7ff";ctx.beginPath();ctx.moveTo(x+38,peak+25);ctx.lineTo(x+50,peak);ctx.lineTo(x+65,peak+28);ctx.closePath();ctx.fill();}for(let i=0;i<35;i++){const x=(i*71+v*29+Math.sin(elapsed*.02+i)*12)%W,y=(i*43+elapsed*(.7+i%3*.3))%(H-65);ctx.fillStyle="#e0f7ff";ctx.globalAlpha=.7;ctx.fillRect(x,y,2,5);}ctx.globalAlpha=1;
+ }else if(world===4){ // Lava Grid: volcanic ridges, lava flow and embers
+  ctx.fillStyle="#351017";ctx.beginPath();ctx.moveTo(0,H-54);for(let x=0;x<=W;x+=80)ctx.lineTo(x,H-100-((x/80*31+v*17)%65));ctx.lineTo(W,H-54);ctx.fill();ctx.fillStyle="#ff5722";ctx.beginPath();ctx.moveTo(250,H-100);ctx.lineTo(370,H-245-v*7);ctx.lineTo(500,H-100);ctx.closePath();ctx.fill();ctx.fillStyle="#ffb347";ctx.beginPath();ctx.moveTo(350,H-170);ctx.lineTo(370,H-245-v*7);ctx.lineTo(390,H-170);ctx.closePath();ctx.fill();for(let i=0;i<25;i++){const x=(i*67+v*37-elapsed*(1+i%3*.5)+W*3)%W,y=(i*31-elapsed*1.4+H*4)%(H-60);ctx.globalAlpha=.65;ctx.fillStyle=i%2?"#ffb347":"#ff4d24";ctx.fillRect(x,y,3,5);}ctx.globalAlpha=1;
+ }else if(world===5){ // Sky Temple: clouds, islands and temple columns
+  for(let i=0;i<8;i++){const x=i*125-((drift*.45)%125),y=100+(i*37+v*19)%100;ctx.globalAlpha=.6;ctx.fillStyle="#d8efff";ctx.beginPath();ctx.ellipse(x+35,y,43,13,0,0,Math.PI*2);ctx.ellipse(x+60,y-8,28,18,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.8;ctx.fillStyle="#426e9a";ctx.fillRect(x+30,H-119-(i%3)*20,14,65+(i%3)*20);ctx.fillRect(x+20,H-120-(i%3)*20,34,8);}ctx.fillStyle="#e2d4a5";ctx.fillRect(520,H-220,20,100);ctx.fillRect(575,H-220,20,100);ctx.fillRect(505,H-230,105,12);ctx.globalAlpha=1;
+ }else if(world===6){ // Toxic Tunnel: cavern ceiling, vines and glowing pools
+  ctx.fillStyle="#102d1a";ctx.beginPath();ctx.moveTo(0,0);for(let x=0;x<=W;x+=70)ctx.lineTo(x,35+(x*13+v*21)%70);ctx.lineTo(W,0);ctx.fill();for(let i=0;i<11;i++){const x=i*78-((drift*.6)%78);ctx.strokeStyle="#84cc16";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,0);ctx.quadraticCurveTo(x+25,45,x+5,70+(i*19%60));ctx.stroke();ctx.fillStyle="#65a30d";ctx.beginPath();ctx.ellipse(x+9,75+(i*19%60),11,5,.5,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=.7;ctx.fillStyle="#65a30d";ctx.fillRect(0,H-70,W,16);ctx.globalAlpha=1;
+ }else if(world===7){ // Starforge: ringed planet and space station
+  ctx.globalAlpha=.85;ctx.fillStyle="#f59e0b";ctx.beginPath();ctx.arc(600,120,48+v*3,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fde68a";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(600,120,78,18,.3,0,Math.PI*2);ctx.stroke();for(let i=0;i<5;i++){const x=i*175-((drift*.6)%175);ctx.fillStyle="#22264d";ctx.fillRect(x+20,145+(i*29%50),85,18);ctx.fillRect(x+50,125+(i*29%50),24,58);ctx.fillStyle=s.accent;ctx.fillRect(x+25,151+(i*29%50),8,6);ctx.fillRect(x+88,151+(i*29%50),8,6);}ctx.globalAlpha=1;
+ }else if(world===8){ // Glitch Realm: fractured digital panels
+  for(let i=0;i<24;i++){const x=(i*97+v*43+(i%3)*Math.sin(elapsed*.03+i)*25)%W,y=(i*53+levelInWorld*17)%(H-90),w=15+(i*11%65),h=3+(i*7%18);ctx.globalAlpha=.18+(i%4)*.12;ctx.fillStyle=i%2?"#ff4fd8":"#4deeea";ctx.fillRect(x,y,w,h);if(i%4===0){ctx.strokeStyle="#fff";ctx.strokeRect(x-5,y+5,w*.6,h+8);}}ctx.globalAlpha=1;
+ }else{ // Final Pulse: eclipse, energy rings and monolithic towers
+  const cx=570,cy=140;ctx.globalAlpha=.8;ctx.fillStyle="#fb7185";ctx.beginPath();ctx.arc(cx,cy,65+v*3,0,Math.PI*2);ctx.fill();ctx.fillStyle="#090819";ctx.beginPath();ctx.arc(cx-18,cy-12,57+v*3,0,Math.PI*2);ctx.fill();ctx.strokeStyle=s.accent;ctx.lineWidth=3;for(let i=0;i<3;i++){ctx.globalAlpha=.55;ctx.beginPath();ctx.ellipse(cx,cy,100+i*22,25+i*8,0,0,Math.PI*2);ctx.stroke();}for(let i=0;i<9;i++){const x=i*100-((drift*.5)%100);ctx.globalAlpha=.7;ctx.fillStyle="#181a35";ctx.fillRect(x,H-134-(i*23%100),42,80+(i*23%100));}ctx.globalAlpha=1;
  }
- // Different moving particles per level: snow, embers, candy sparks, or digital motes.
- for(let i=0;i<22;i++){const x=(i*83-elapsed*(1.2+(i%4)*.35)-levelInWorld*17+W*3)%W;const y=(i*47+levelInWorld*29+Math.sin(elapsed*.025+i)*15)%(H-75);ctx.globalAlpha=.25+(i%3)*.18;ctx.fillStyle=(world===4||world===2)?(i%2?"#ffb454":"#ff6384"):color;ctx.fillRect(x,y,2+(i%3),2+(i%3));}
- ctx.globalAlpha=1;ctx.strokeStyle=color;ctx.globalAlpha=.15;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H-54);ctx.lineTo(W,H-54);ctx.stroke();ctx.globalAlpha=1;
+ // World-specific floor and bright edge complete the scene.
+ ctx.globalAlpha=1;const floors=["#101a31","#21133a","#8b2d66","#c9f5ff","#351017","#304c6b","#173d20","#171733","#24102d","#101323"];ctx.fillStyle=floors[world];ctx.fillRect(0,H-54,W,54);ctx.fillStyle=s.accent;ctx.globalAlpha=.95;ctx.fillRect(0,H-54,W,3);ctx.globalAlpha=.45;ctx.fillRect(0,H-48,W,1);for(let i=0;i<18;i++){const x=(i*53-(elapsed*(1.5+world*.12))%53+W)%W;ctx.globalAlpha=.35;ctx.fillStyle=s.accent;ctx.fillRect(x,H-38,18,2);ctx.fillRect(x+7,H-31,3,3);}ctx.globalAlpha=1;
 }
 function startNinjaLevel(level){
  const nextButton=document.getElementById("nextLevel");if(nextButton)nextButton.style.display="none";
