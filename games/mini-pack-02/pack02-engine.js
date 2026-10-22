@@ -45,9 +45,9 @@ function ninja(){
  if(frame%90===0)ninjaPlatforms.push({x:W+10,y:[285,315,345][Math.floor(Math.random()*3)],w:150,h:18});
  const previousBottom=player.y+player.h,previousY=player.y;
  // Let the ninja run forward with Right/D while the course scrolls left.
- if(keys.ArrowRight||keys.d)player.x=Math.min(330,player.x+4);
- if(keys.ArrowLeft||keys.a)player.x=Math.max(15,player.x-4);
- player.vy=(player.vy||0)+.5;player.y+=player.vy;
+ if(keys.ArrowRight||keys.d)player.x=Math.min(400,player.x+5);
+ if(keys.ArrowLeft||keys.a)player.x=Math.max(15,player.x-5);
+ player.vy=(player.vy||0)+.4;player.y+=player.vy;
  let landed=false;
  for(const p of ninjaPlatforms){
    if(player.vy>=0&&previousBottom<=p.y+4&&player.y+player.h>=p.y&&player.x+player.w>p.x+4&&player.x<p.x+p.w-4){
@@ -55,7 +55,7 @@ function ninja(){
    }
  }
  if(!landed&&player.y+player.h>=H-30){player.y=H-30-player.h;player.vy=0;}
- if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-10;
+ if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-13;
  items.forEach(i=>{
    i.x-=5;ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
    if(hit(player,i)){if(previousY+player.h<i.y+5){i.x=-100;score+=5;}else{lives--;i.x=-100;}}
