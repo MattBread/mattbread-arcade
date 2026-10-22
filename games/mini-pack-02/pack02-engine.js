@@ -75,7 +75,7 @@ function ninja(){
  text("LEVEL "+ninjaLevel,20,55,18,"#e0f2fe");
  text("JUMP  •  AVOID THE SPIKES",W-285,30,14,"#c4b5fd");
  // Rotating-looking neon cube.
- ctx.save();ctx.translate(player.x+player.w/2,player.y+player.h/2);ctx.rotate(Math.min(.75,Math.max(-.75,(player.vy||0)*.035));ctx.fillStyle=colors[(ninjaLevel-1)%colors.length];ctx.fillRect(-player.w/2,-player.h/2,player.w,player.h);ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.strokeRect(-player.w/2+4,-player.h/2+4,player.w-8,player.h-8);ctx.restore();
+ ctx.save();ctx.translate(player.x+player.w/2,player.y+player.h/2);ctx.rotate(Math.min(.75,Math.max(-.75,(player.vy||0)*.035)));ctx.fillStyle=colors[(ninjaLevel-1)%colors.length];ctx.fillRect(-player.w/2,-player.h/2,player.w,player.h);ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.strokeRect(-player.w/2+4,-player.h/2+4,player.w-8,player.h-8);ctx.restore();
  if(elapsed>=target){
    score+=100*ninjaLevel;
    if(ninjaLevel<5){ninjaLevel++;ninjaLevelStart=frame;items=[];player.y=ground-player.h;player.vy=0;}
