@@ -49,6 +49,41 @@ function drawNinjaSelect(){
  }
  ctx.textAlign="left";text("Click any unlocked level to play",35,455-14,13,"#c7d2fe");
 }
+function drawNinjaBackground(world,levelInWorld,elapsed,color){
+ const palettes=[
+  [["#06152b","#123b65"],["#170b2e","#42145d"],["#071f28","#14514d"],["#10132c","#34356b"],["#24101e","#64243e"]],
+  [["#080b22","#30205d"],["#130d2a","#4c2370"],["#061a31","#124a75"],["#1a0928","#612b76"],["#0b1230","#252b66"]],
+  [["#28102b","#783052"],["#241029","#a13f68"],["#301323","#783b3b"],["#20102d","#563a78"],["#351229","#9a3c52"]],
+  [["#041b32","#146078"],["#09243a","#377d9a"],["#10233d","#456e9c"],["#071b30","#1d5b80"],["#0b2439","#5294a8"]],
+  [["#260b13","#7c251d"],["#35120c","#a34720"],["#28100d","#61241f"],["#31150a","#8b4a16"],["#220d19","#73304b"]],
+  [["#071d32","#24618a"],["#0b1935","#3a4e88"],["#102644","#4a75a0"],["#101c38","#596ba3"],["#071f3a","#287b9a"]],
+  [["#142009","#3b5720"],["#0b2119","#1f6545"],["#1b2608","#526a1d"],["#10271f","#26735b"],["#20230a","#68782a"]],
+  [["#100d31","#4b357b"],["#11143a","#315ca0"],["#1b0e35","#793f8b"],["#071c3b","#276ca1"],["#171238","#6750a0"]],
+  [["#180923","#6b1e70"],["#0b1230","#4d286c"],["#1a0b29","#7b255d"],["#091c31","#1e6680"],["#211033","#5c367b"]],
+  [["#020816","#26304c"],["#100b25","#4c255e"],["#17101d","#623044"],["#06172a","#1d5272"],["#100e2c","#5a4b83"]]
+ ];
+ const variants=palettes[world][(levelInWorld-1)%5];
+ const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,variants[0]);grad.addColorStop(1,variants[1]);ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+ // A unique constellation/sky pattern for each level.
+ let seed=ninjaLevel*7919+levelInWorld*101;
+ const rand=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+ for(let i=0;i<42;i++){const x=rand()*W,y=rand()*(H-90),r=.7+rand()*1.8;ctx.globalAlpha=.25+rand()*.6;ctx.fillStyle=i%4===0?color:"#e5f3ff";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+ ctx.globalAlpha=1;
+ const style=world;
+ if(style===0||style===1||style===7||style===8||style===9){
+   // Neon city / towers / alien skyline.
+   for(let i=0;i<15;i++){const bw=25+((i*19+levelInWorld*7)%35),bh=55+((i*43+levelInWorld*23+world*13)%145),x=i*58-((elapsed*1.1)%58);ctx.fillStyle=i%2?variants[0]:variants[1];ctx.globalAlpha=.8;ctx.fillRect(x,H-54-bh,bw,bh);ctx.globalAlpha=.65;ctx.fillStyle=color;for(let wy=H-54-bh+10;wy<H-64;wy+=15)for(let wx=x+6;wx<x+bw-4;wx+=12)if((wx+wy+i)%3<2)ctx.fillRect(wx,wy,4,6);}
+ }else if(style===2||style===4||style===6){
+   // Candy hills, volcanic ridges, or toxic overgrowth.
+   for(let i=0;i<6;i++){const x=i*165-((elapsed*.55)%165);ctx.globalAlpha=.45;ctx.fillStyle=i%2?variants[1]:color;ctx.beginPath();ctx.ellipse(x+80,H-55,110,45+(i%3)*12,0,Math.PI,Math.PI*2);ctx.fill();}
+ }else{
+   // Frozen cliffs / sky temples / drifting planetary ridges.
+   for(let i=0;i<7;i++){const x=i*135-((elapsed*.35)%135);ctx.globalAlpha=.5;ctx.fillStyle=i%2?color:variants[1];ctx.beginPath();ctx.moveTo(x,H-54);ctx.lineTo(x+45,H-130-(i*17+levelInWorld*9)%55);ctx.lineTo(x+100,H-54);ctx.closePath();ctx.fill();}
+ }
+ // Different moving particles per level: snow, embers, candy sparks, or digital motes.
+ for(let i=0;i<22;i++){const x=(i*83-elapsed*(1.2+(i%4)*.35)-levelInWorld*17+W*3)%W;const y=(i*47+levelInWorld*29+Math.sin(elapsed*.025+i)*15)%(H-75);ctx.globalAlpha=.25+(i%3)*.18;ctx.fillStyle=(world===4||world===2)?(i%2?"#ffb454":"#ff6384"):color;ctx.fillRect(x,y,2+(i%3),2+(i%3));}
+ ctx.globalAlpha=1;ctx.strokeStyle=color;ctx.globalAlpha=.15;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H-54);ctx.lineTo(W,H-54);ctx.stroke();ctx.globalAlpha=1;
+}
 function startNinjaLevel(level){
  const nextButton=document.getElementById("nextLevel");if(nextButton)nextButton.style.display="none";
  loadNinjaProgress();if(level<1||level>ninjaUnlocked)return;
@@ -62,11 +97,7 @@ function ninja(){
  for(let t=35;t<target-20;t+=Math.max(43,84-levelInWorld*3-world)){
    seed=(seed*9301+49297)%233280;pattern.push([t,1+Math.floor(seed/233280*(levelInWorld>=7?3:2))]);
  }
- ctx.fillStyle="#080b1b";ctx.fillRect(0,0,W,H);
- ctx.strokeStyle="#15264a";ctx.lineWidth=1;
- for(let x=-(elapsed*speed*.45%40);x<W;x+=40){ctx.beginPath();ctx.moveTo(x,40);ctx.lineTo(x,H);ctx.stroke();}
- for(let y=55;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
- ctx.globalAlpha=.13;ctx.fillStyle=color;ctx.fillRect(0,75,W,90);ctx.globalAlpha=1;
+ drawNinjaBackground(world,levelInWorld,elapsed,color);
  ctx.fillStyle="#111a35";ctx.fillRect(0,ground,W,H-ground);ctx.fillStyle=color;ctx.fillRect(0,ground,W,4);
  while(ninjaSpawnIndex<pattern.length&&elapsed>=pattern[ninjaSpawnIndex][0]){
    const count=pattern[ninjaSpawnIndex][1];for(let n=0;n<count;n++)items.push({x:W+18+n*31,y:ground-30,t:"spike",w:30,h:30});ninjaSpawnIndex++;
