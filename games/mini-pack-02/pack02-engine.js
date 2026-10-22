@@ -35,19 +35,23 @@ function loadNinjaProgress(){try{ninjaUnlocked=Math.max(1,Math.min(100,Number(lo
 function drawNinjaSelect(){
  ninjaScreen="select";running=false;ctx.clearRect(0,0,W,H);ctx.fillStyle="#080b1b";ctx.fillRect(0,0,W,H);
  for(let x=0;x<W;x+=40){ctx.strokeStyle="#15264a";ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
- text("NEON DASH",W/2-100,35,28,"#ffffff");text("100 LEVELS · 10 WORLDS",W/2-130,61,15,"#9fb5e8");
- const cols=10,cellW=59,cellH=27,gap=8,startX=35,startY=100;
+ text("NEON DASH",W/2-100,28,26,"#ffffff");text("100 LEVELS · 10 WORLDS",W/2-130,51,14,"#9fb5e8");
+ // Two columns of world cards; each card contains its own 5-by-2 level grid.
+ const cardW=376,cardH=72,gapX=12,gapY=7,startX=14,startY=64;
+ const tileW=57,tileH=20,tileGap=4;
  for(let w=0;w<10;w++){
-   const first=w*10+1,color=ninjaColors[w];
-   ctx.fillStyle=color;ctx.font="bold 11px system-ui";ctx.fillText("WORLD "+(w+1)+" · "+ninjaWorlds[w],startX,startY+w*34-7);
+   const col=w%2,row=Math.floor(w/2),x0=startX+col*(cardW+gapX),y0=startY+row*(cardH+gapY),color=ninjaColors[w];
+   ctx.globalAlpha=.16;ctx.fillStyle=color;ctx.fillRect(x0,y0,cardW,cardH);ctx.globalAlpha=1;
+   ctx.strokeStyle=color;ctx.globalAlpha=.75;ctx.strokeRect(x0,y0,cardW,cardH);ctx.globalAlpha=1;
+   ctx.fillStyle=color;ctx.font="bold 11px system-ui";ctx.textAlign="left";ctx.fillText("WORLD "+(w+1)+" · "+ninjaWorlds[w],x0+8,y0+14);
    for(let j=0;j<10;j++){
-     const level=first+j,x=startX+j*(cellW+gap),y=startY+w*34;
-     ctx.fillStyle=level<=ninjaUnlocked?color:"#1a2237";ctx.globalAlpha=level<=ninjaUnlocked?0.95:0.8;ctx.fillRect(x,y,cellW,cellH);ctx.globalAlpha=1;
-     ctx.strokeStyle=level===ninjaUnlocked?"#ffffff":"#3b4966";ctx.strokeRect(x,y,cellW,cellH);
-     ctx.fillStyle=level<=ninjaUnlocked?"#081124":"#68738d";ctx.font="bold 12px system-ui";ctx.textAlign="center";ctx.fillText(level<=ninjaUnlocked?String(level):"🔒",x+cellW/2,y+18);
+     const level=w*10+j+1,tx=x0+8+(j%5)*(tileW+tileGap),ty=y0+19+Math.floor(j/5)*(tileH+3),unlocked=level<=ninjaUnlocked;
+     ctx.fillStyle=unlocked?color:"#1a2237";ctx.globalAlpha=unlocked?.95:.85;ctx.fillRect(tx,ty,tileW,tileH);ctx.globalAlpha=1;
+     ctx.strokeStyle=level===ninjaUnlocked?"#ffffff":"#3b4966";ctx.strokeRect(tx,ty,tileW,tileH);
+     ctx.fillStyle=unlocked?"#081124":"#68738d";ctx.font="bold 11px system-ui";ctx.textAlign="center";ctx.fillText(unlocked?String(level):"🔒",tx+tileW/2,ty+14);
    }
  }
- ctx.textAlign="left";text("Click any unlocked level to play",35,455-14,13,"#c7d2fe");
+ ctx.textAlign="left";text("Click an unlocked level to play",18,446,12,"#c7d2fe");
 }
 function drawNinjaBackground(world,levelInWorld,elapsed,color){
  const scenes=[
@@ -190,7 +194,7 @@ function whack(){
  ctx.fillStyle="#facc15";ctx.font="bold 18px system-ui";ctx.textAlign="center";ctx.fillText("SCORE  "+score+"     TIME  "+Math.max(0,Math.ceil(time)),W/2,by+314);
  ctx.textAlign="left";text("TAP / CLICK THE BOT",20,30,17,"#e2e8f0");
 }
-let pointerDown=false;canvas.addEventListener("pointerdown",e=>{pointerDown=true;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;if(name==="ninja-dash"){if(ninjaScreen==="select"){const cellW=59,cellH=27,gap=8,startX=35,startY=100;if(y>=startY-5&&y<startY+10*34){const row=Math.floor((y-startY)/34),col=Math.floor((x-startX)/(cellW+gap));if(row>=0&&row<10&&col>=0&&col<10){const level=row*10+col+1;if(level<=ninjaUnlocked)startNinjaLevel(level);}}}else if(ninjaScreen==="complete"){drawNinjaSelect();document.getElementById("status").textContent="Choose an unlocked level · "+ninjaUnlocked+"/100 unlocked";}else if(ninjaScreen==="failed"){startNinjaLevel(ninjaLevel);}else if(player.vy===0){player.vy=-12.4;}return;}if(name==="bubble-burst"){items=items.filter(i=>{if(Math.hypot(i.x-x,i.y-y)<i.r+8){score+=10;return false;}return true;});}if(name==="whack-a-bot"&&items.some(i=>Math.hypot(i.x-x,i.y-y)<42)){score+=10;items=[];nextBotFrame=frame+Math.floor(45+Math.random()*25);}if(name==="pixel-jumper"){if(player.vy===0)player.vy=-10;}if(name==="neon-pinball"){ball.vy=-Math.abs(ball.vy)-1;score++;}});canvas.addEventListener("pointerup",()=>pointerDown=false);
+let pointerDown=false;canvas.addEventListener("pointerdown",e=>{pointerDown=true;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;if(name==="ninja-dash"){if(ninjaScreen==="select"){const cardW=376,cardH=72,gapX=12,gapY=7,startX=14,startY=64,tileW=57,tileH=20,tileGap=4;for(let w=0;w<10;w++){const cx=startX+(w%2)*(cardW+gapX),cy=startY+Math.floor(w/2)*(cardH+gapY);if(x>=cx&&x<=cx+cardW&&y>=cy+19&&y<=cy+62){const col=Math.floor((x-(cx+8))/(tileW+tileGap)),row=Math.floor((y-(cy+19))/(tileH+3));if(col>=0&&col<5&&row>=0&&row<2){const level=w*10+row*5+col+1;if(level<=ninjaUnlocked)startNinjaLevel(level);}break;}}}else if(ninjaScreen==="complete"){drawNinjaSelect();document.getElementById("status").textContent="Choose an unlocked level · "+ninjaUnlocked+"/100 unlocked";}else if(ninjaScreen==="failed"){startNinjaLevel(ninjaLevel);}else if(player.vy===0){player.vy=-12.4;}return;}if(name==="bubble-burst"){items=items.filter(i=>{if(Math.hypot(i.x-x,i.y-y)<i.r+8){score+=10;return false;}return true;});}if(name==="whack-a-bot"&&items.some(i=>Math.hypot(i.x-x,i.y-y)<42)){score+=10;items=[];nextBotFrame=frame+Math.floor(45+Math.random()*25);}if(name==="pixel-jumper"){if(player.vy===0)player.vy=-10;}if(name==="neon-pinball"){ball.vy=-Math.abs(ball.vy)-1;score++;}});canvas.addEventListener("pointerup",()=>pointerDown=false);
 function move(speed){if(keys.ArrowLeft||keys.a)player.x-=speed;if(keys.ArrowRight||keys.d)player.x+=speed;if(keys.ArrowUp||keys.w)player.y-=speed;if(keys.ArrowDown||keys.s)player.y+=speed;player.x=Math.max(0,Math.min(W-player.w,player.x));player.y=Math.max(35,Math.min(H-player.h,player.y));}
 document.addEventListener("keydown",e=>{keys[e.key]=true;if([" ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key))e.preventDefault();if(name==="block-drop"&&e.key==="ArrowUp"){e.preventDefault();const rotated=player.shape[0].map((_,i)=>player.shape.map(row=>row[i]).reverse());if(!blockCollision(rotated,player.x,player.y))player.shape=rotated;}if(name==="block-drop"&&e.code==="Space"){e.preventDefault();hardDrop();}});document.addEventListener("keyup",e=>keys[e.key]=false);
 const nextLevelButton=document.getElementById("nextLevel");if(nextLevelButton)nextLevelButton.addEventListener("click",()=>{if(name==="ninja-dash"&&ninjaScreen==="complete"&&ninjaLevel<100)startNinjaLevel(ninjaLevel+1);});
