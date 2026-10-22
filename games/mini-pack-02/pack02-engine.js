@@ -5,9 +5,9 @@ const names={"dungeon-escape":"Dungeon Escape","star-blaster":"Star Blaster","pi
 const descriptions={"dungeon-escape":"Find the treasure and reach the green exit. Move with WASD or arrow keys.","star-blaster":"Move left and right, shoot incoming ships. Arrow keys/WASD + Space.","pixel-jumper":"Jump between platforms and grab coins. Move with arrows/A-D; Space to jump.","neon-pinball":"Keep the ball bouncing with the flippers. Use left/right arrows or tap the sides.","turbo-traffic":"Dodge the traffic for as long as possible. Move with arrows or A/D.","block-drop":"Move and rotate falling blocks to complete rows. Arrows move, Up rotates, Down drops.","deep-sea-dive":"Collect pearls and avoid sea mines. Move with arrows or WASD.","bubble-burst":"Click or tap bubbles before they float away. Build your score!","ninja-dash":"Jump between floating platforms and dodge traps. Space/Up or tap to jump.","whack-a-bot":"Whack the bots as they pop up from the arcade machine! Click or tap them. Slower pace, 45 seconds."};
 const titleElement=document.getElementById("game-title");if(titleElement)titleElement.textContent=names[name]||"Mini Game";
 document.getElementById("instructions").textContent=descriptions[name]||"Use the controls to play.";
-let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1,nextBotFrame=0,lastBotSlot=-1,ninjaPlatforms=[];
+let W=800,H=450,keys={},items=[],player={},score=0,lives=3,frame=0,running=false,over=false,time=30,grid=[],ball={},dir=1,dungeonLevel=1,nextBotFrame=0,lastBotSlot=-1,ninjaPlatforms=[],ninjaLevel=1,ninjaLevelStart=0;
 function resize(){const r=canvas.getBoundingClientRect();W=800;H=450;canvas.width=W;canvas.height=H;}resize();
-function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:90,y:H-130,w:30,h:30,vx:0,vy:0};ninjaPlatforms=[];if(name==="ninja-dash")ninjaPlatforms=[{x:65,y:350,w:150,h:18},{x:255,y:305,w:150,h:18},{x:445,y:350,w:150,h:18},{x:635,y:300,w:150,h:18}];grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;lastBotSlot=-1;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
+function reset(){score=0;lives=3;frame=0;time=30;over=false;running=true;items=[];player={x:90,y:H-130,w:30,h:30,vx:0,vy:0};ninjaPlatforms=[];ninjaLevel=1;ninjaLevelStart=frame;if(name==="ninja-dash")ninjaPlatforms=[];grid=Array.from({length:20},()=>Array(10).fill(0));ball={x:W/2,y:H/2,vx:3,vy:3};if(name==="dungeon-escape"){dungeonLevel=1;try{dungeonLevel=Math.max(1,Math.min(10,Number(localStorage.getItem("dungeonEscapeLevel"))||1));}catch(e){}score=(dungeonLevel-1)*150;createDungeonLevel();}if(name==="block-drop")spawnBlock();if(name==="whack-a-bot"){time=45;nextBotFrame=frame+25;lastBotSlot=-1;}document.getElementById("status").textContent=(name==="dungeon-escape"?"Floor: "+dungeonLevel+" / 10 · ":"")+"Score: "+score+" · Lives: 3";requestAnimationFrame(loop);}
 function spawnBlock(){const shapes=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]];player.shape=shapes[Math.floor(Math.random()*shapes.length)];player.x=3;player.y=0;}
 function hit(a,b){return a.x<b.x+(b.w||22)&&a.x+(a.w||22)>b.x&&a.y<b.y+(b.h||22)&&a.y+(a.h||22)>b.y;}
 function loop(){if(!running)return;frame++;ctx.clearRect(0,0,W,H);ctx.fillStyle="#080d1a";ctx.fillRect(0,0,W,H);
@@ -29,55 +29,58 @@ function blockdrop(){const cell=20,left=270,top=24;ctx.fillStyle="#111b2d";ctx.f
 function sea(){ctx.fillStyle="#0b4260";ctx.fillRect(0,0,W,H);for(let i=0;i<8;i++){ctx.strokeStyle="#16769a";ctx.beginPath();ctx.arc((i*127+frame*1.2)%W,70+i*42,40,0,Math.PI);ctx.stroke();}if(frame%40===0)items.push({x:30+Math.random()*730,y:40+Math.random()*350,t:Math.random()<.72?"pearl":"mine"});move(4);items.forEach(i=>{ctx.fillStyle=i.t==="pearl"?"#fde68a":"#fb7185";ctx.beginPath();ctx.arc(i.x,i.y,12,0,7);ctx.fill();if(hit(player,{...i,w:24,h:24})){if(i.t==="pearl")score+=10;else lives--;i.y=-100;}});items=items.filter(i=>i.y>-50);playerDraw("#a5f3fc");}
 function bubbles(){if(frame%18===0)items.push({x:25+Math.random()*750,y:H+20,t:"bubble",r:12+Math.random()*15,vy:1+Math.random()*2});items.forEach(i=>{i.y-=i.vy;ctx.fillStyle=["#38bdf8","#c084fc","#fb7185"][Math.floor(i.x)%3];ctx.beginPath();ctx.arc(i.x,i.y,i.r,0,7);ctx.fill();});items=items.filter(i=>{if(i.y< -30){lives--;return false;}return true;});text("TAP / CLICK BUBBLES",20,30,16);}
 function ninja(){
- // Make the platforms large, bright, and immediately reachable.
- ctx.fillStyle="#263449";ctx.fillRect(0,H-30,W,30);
- ctx.fillStyle="#354b65";ctx.fillRect(0,H-30,W,5);
- // Spawn a readable mix of ground spikes and low barriers to jump over.
- if(frame%100===0){
-   const kind=Math.random()<.65?"spike":"barrier";
-   items.push({x:W+20,y:H-55,t:kind,w:kind==="spike"?28:34,h:kind==="spike"?25:32});
-   if(Math.random()<.28)items.push({x:W+72,y:H-55,t:"spike",w:28,h:25});
+ const ground=H-48,elapsed=frame-ninjaLevelStart;
+ // Geometry-dash-inspired auto-run course: fixed cube, scrolling neon world.
+ const colors=["#38bdf8","#a78bfa","#fb7185","#4ade80"];
+ ctx.fillStyle="#0b1225";ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle="#182b4b";ctx.lineWidth=1;
+ for(let x=-(elapsed*5%40);x<W;x+=40){ctx.beginPath();ctx.moveTo(x,40);ctx.lineTo(x,H);ctx.stroke();}
+ for(let y=40;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+ ctx.fillStyle="#111d38";ctx.fillRect(0,ground,W,H-ground);
+ ctx.fillStyle=colors[(ninjaLevel-1)%colors.length];ctx.fillRect(0,ground,W,4);
+ const speed=5+ninjaLevel*.45,cycle=360-(ninjaLevel*15);
+ // Each level has its own repeating, increasingly challenging obstacle pattern.
+ if(elapsed%cycle===30||elapsed%cycle===95||elapsed%cycle===165||elapsed%cycle===245){
+   const double=ninjaLevel>=2&&Math.random()<.48;
+   items.push({x:W+5,y:ground-30,t:"spike",w:30,h:30});
+   if(double)items.push({x:W+36,y:ground-30,t:"spike",w:30,h:30});
  }
- // Scroll the course slowly so the platforms remain easy to see and reach.
- ninjaPlatforms.forEach(p=>{
-   p.x-=1.2;
-   ctx.fillStyle="#0e7490";ctx.fillRect(p.x-2,p.y-2,p.w+4,p.h+4);
-   ctx.fillStyle="#164e63";ctx.fillRect(p.x,p.y,p.w,p.h);
-   ctx.fillStyle="#67e8f9";ctx.fillRect(p.x,p.y,p.w,7);
-   ctx.fillStyle="#a5f3fc";ctx.fillRect(p.x+10,p.y+p.h,p.w-20,4);
- });
- ninjaPlatforms=ninjaPlatforms.filter(p=>p.x+p.w>0);
- if(frame%90===0)ninjaPlatforms.push({x:W+10,y:[285,315,345][Math.floor(Math.random()*3)],w:150,h:18});
- const previousBottom=player.y+player.h,previousY=player.y;
- // Let the ninja run forward with Right/D while the course scrolls left.
- if(keys.ArrowRight||keys.d)player.x=Math.min(400,player.x+5);
- if(keys.ArrowLeft||keys.a)player.x=Math.max(15,player.x-5);
- player.vy=(player.vy||0)+.4;player.y+=player.vy;
- let landed=false;
- for(const p of ninjaPlatforms){
-   if(player.vy>=0&&previousBottom<=p.y+4&&player.y+player.h>=p.y&&player.x+player.w>p.x+4&&player.x<p.x+p.w-4){
-     player.y=p.y-player.h;player.vy=0;landed=true;break;
-   }
- }
- if(!landed&&player.y+player.h>=H-30){player.y=H-30-player.h;player.vy=0;}
- if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-13;
+ if(ninjaLevel>=2&&elapsed%cycle===205)items.push({x:W+10,y:ground-48,t:"block",w:42,h:48});
+ if(ninjaLevel>=3&&elapsed%cycle===285){items.push({x:W+10,y:ground-30,t:"spike",w:30,h:30});items.push({x:W+42,y:ground-30,t:"spike",w:30,h:30});}
+ const prevY=player.y,prevBottom=player.y+player.h;
+ player.x=135;player.vy=(player.vy||0)+.62;player.y+=player.vy;
+ if(player.y+player.h>=ground){player.y=ground-player.h;player.vy=0;}
+ if((keys[" "]||keys.ArrowUp||keys.w)&&player.vy===0)player.vy=-12.5;
  items.forEach(i=>{
-   i.x-=4.5;
-   if(i.t==="barrier"){
+   i.x-=speed;
+   if(i.t==="block"){
      ctx.fillStyle="#f97316";ctx.fillRect(i.x,i.y,i.w,i.h);
      ctx.fillStyle="#fed7aa";ctx.fillRect(i.x+5,i.y+5,i.w-10,5);
-     ctx.fillStyle="#9a3412";ctx.fillRect(i.x+5,i.y+i.h-5,i.w-10,5);
    }else{
-     ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
-     ctx.fillStyle="#fecdd3";ctx.fillRect(i.x+i.w/2-2,i.y+8,4,i.h-8);
+     ctx.fillStyle="#fb3f79";ctx.beginPath();ctx.moveTo(i.x,i.y+i.h);ctx.lineTo(i.x+i.w/2,i.y);ctx.lineTo(i.x+i.w,i.y+i.h);ctx.closePath();ctx.fill();
+     ctx.fillStyle="#ffc1d5";ctx.fillRect(i.x+i.w/2-2,i.y+9,4,i.h-9);
    }
-   if(hit(player,i)){
-     if(previousY+player.h<i.y+5&&player.vy>0){i.x=-100;score+=5;}
-     else{lives--;i.x=-100;}
+   const overlap=player.x+player.w-5>i.x+5&&player.x+5<i.x+i.w-5&&player.y+player.h-4>i.y+5&&player.y+4<i.y+i.h;
+   if(overlap){
+     // A collision restarts the current level, as in a rhythm platformer.
+     lives--;items=[];player.y=ground-player.h;player.vy=0;ninjaLevelStart=frame;
+     if(lives<=0){running=false;over=true;ctx.fillStyle="rgba(4,8,20,.88)";ctx.fillRect(0,0,W,H);text("CRASH!",W/2-62,H/2-8,36,"#fb7185");text("Press RESTART to try Level "+ninjaLevel,W/2-175,H/2+28,16);return;}
    }
  });
- items=items.filter(i=>i.x>-50);
- score+=frame%35===0?1:0;playerDraw("#a78bfa");text("JUMP BETWEEN PLATFORMS · DODGE TRAPS",20,30,16);
+ items=items.filter(i=>i.x+i.w>-10);
+ if(!running)return;
+ // Level goal is reached after the course scrolls for its target duration.
+ const target=520+ninjaLevel*90,progress=Math.min(1,elapsed/target);
+ ctx.fillStyle="#243451";ctx.fillRect(20,18,210,10);ctx.fillStyle="#22d3ee";ctx.fillRect(20,18,210*progress,10);
+ text("LEVEL "+ninjaLevel,20,55,18,"#e0f2fe");
+ text("JUMP  •  AVOID THE SPIKES",W-285,30,14,"#c4b5fd");
+ // Rotating-looking neon cube.
+ ctx.save();ctx.translate(player.x+player.w/2,player.y+player.h/2);ctx.rotate(Math.min(.75,Math.max(-.75,(player.vy||0)*.035));ctx.fillStyle=colors[(ninjaLevel-1)%colors.length];ctx.fillRect(-player.w/2,-player.h/2,player.w,player.h);ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.strokeRect(-player.w/2+4,-player.h/2+4,player.w-8,player.h-8);ctx.restore();
+ if(elapsed>=target){
+   score+=100*ninjaLevel;
+   if(ninjaLevel<5){ninjaLevel++;ninjaLevelStart=frame;items=[];player.y=ground-player.h;player.vy=0;}
+   else{running=false;over=true;ctx.fillStyle="rgba(4,8,20,.88)";ctx.fillRect(0,0,W,H);text("ALL 5 LEVELS CLEARED!",W/2-205,H/2-10,28,"#4ade80");text("Final score: "+score,W/2-80,H/2+28,18);}
+ }
 }
 function whack(){
  time-=1/60;
